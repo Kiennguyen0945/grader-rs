@@ -1,0 +1,33 @@
+services:
+  grader-backend:
+    depends_on:
+      - grader-postgres
+    build:
+      context: .
+      dockerfile: Dockerfile.backend.yaml
+    ports:
+      - "8000:8080"
+    env_file:
+      - .env
+
+  grader-postgres:
+    image: postgres:16.15-alpine3.24
+    volumes:
+      - grader-postgres-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: grader
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+
+  grader-pgadmin:
+    image: dpage/pgadmin4:9.8
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: demo@example.com
+      PGADMIN_DEFAULT_PASSWORD: secret
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+
+volumes:
+  grader-postgres-data:
