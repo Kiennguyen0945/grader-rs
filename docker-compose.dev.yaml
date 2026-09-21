@@ -18,6 +18,8 @@ services:
       POSTGRES_DB: grader
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
+    ports:
+      - "127.0.0.1:5432:5432"
 
   grader-pgadmin:
     image: dpage/pgadmin4:9.8
