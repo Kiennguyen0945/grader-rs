@@ -29,15 +29,8 @@ public class CourseService {
     public List<Course> getAllCourses() {
         return courseRepository.findAll();
     }
-    public Optional<Course> getCourseById(Long id) {
-        if (!courseExists(id)) {
-            throw new IllegalArgumentException (
-                "Course doesn't exist."
-            );
-        }
-        return courseRepository.findById(id);
+    public Optional<Course> getCourseByCode(String code) {
+        return courseRepository.findByCode(code);
     }
-    public boolean courseExists(Long id) {
-        return courseRepository.existsById(id); 
-    }
+   
 }
