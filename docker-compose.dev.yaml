@@ -7,6 +7,11 @@ services:
       dockerfile: Dockerfile.backend.yaml
     ports:
       - "8080:8080"
+    volumes:
+      - .:/app
+      - maven-cache:/root/.m2
+    working_dir: /app
+    command: ./mvnw spring-boot:run
     env_file:
       - .env
 
@@ -36,3 +41,4 @@ services:
 volumes:
   grader-postgres-data:
   grader-pgadmin-data:
+  maven-cache:
