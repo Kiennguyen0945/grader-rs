@@ -1,10 +1,13 @@
 package com.example.demo.course;
 
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
 import java.util.List;
 import java.util.Optional;
@@ -55,4 +58,25 @@ class CourseControllerTest {
             .andExpect(jsonPath("$.code").value("CS505"));
     }
     
+    @Test 
+    void partialUpdateCodeByCode_returnsCourse() throws Exception {
+        Course course = new Course("CS505", "Yale", null);
+        when(courseService.partialUpdateCourse("CS505", "Yale", null)).thenReturn(course);
+        mockMvc.perform(
+        patch("/api/courses/CS505")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(course)))
+        .andDo(print())
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.code").value("CS505"))
+        .andExpect(jsonPath("$.courseName").value("Yale"));
+    }
+
+    @Test
+    void deleteCourse_returnNoContent() throws Exception {
+        mockMvc.perform(delete("/api/courses/CS505"))
+        .andExpect(status().isNoContent());
+    }
+
+
 }
