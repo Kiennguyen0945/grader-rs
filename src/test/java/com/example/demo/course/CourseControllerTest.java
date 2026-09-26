@@ -8,17 +8,21 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 
+import java.lang.foreign.Linker.Option;
 import java.util.List;
-import java.util.Optional;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.server.ResponseStatusException;
 
 import tools.jackson.databind.ObjectMapper;
 
@@ -49,21 +53,23 @@ class CourseControllerTest {
             .andExpect(jsonPath("$.code").value("CS505"));
     }
     @Test
-    void getCourseByCode_returnCourse() throws Exception {
+    void getCourseById_returnCourse() throws Exception {
+        Long id = 1L;
         Course course = new Course("CS505", "Harvard", "");
-        when(courseService.getCourseByCode("CS505")).thenReturn(Optional.of(course));
+        when(courseService.getCourseById(eq(id))).thenReturn(course);
         mockMvc.perform(
-            get("/api/courses/CS505"))
+            get("/api/courses/" + id))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.code").value("CS505"));
     }
     
     @Test 
-    void partialUpdateCodeByCode_returnsCourse() throws Exception {
+    void partialUpdateCourseById_returnsCourse() throws Exception {
+        Long id = 1L;
         Course course = new Course("CS505", "Yale", null);
-        when(courseService.partialUpdateCourse("CS505", "Yale", null)).thenReturn(course);
+        when(courseService.partialUpdateCourse(eq(id), anyString(), any())).thenReturn(course);
         mockMvc.perform(
-        patch("/api/courses/CS505")
+        patch("/api/courses/" + id)
         .contentType(MediaType.APPLICATION_JSON)
         .content(objectMapper.writeValueAsString(course)))
         .andDo(print())
@@ -74,8 +80,17 @@ class CourseControllerTest {
 
     @Test
     void deleteCourse_returnNoContent() throws Exception {
-        mockMvc.perform(delete("/api/courses/CS505"))
+        Long id = 1L;
+        mockMvc.perform(delete("/api/courses/" + id))
         .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void getCourseDoesNotExist_returnNotFoun() throws Exception {
+        Long id = 999L;
+        when(courseService.getCourseById(id)).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND));
+        mockMvc.perform(get("/api/courses/" + id))
+        .andExpect(status().isNotFound());
     }
 
 

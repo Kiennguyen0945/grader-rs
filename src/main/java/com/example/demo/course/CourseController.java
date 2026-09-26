@@ -1,12 +1,8 @@
 package com.example.demo.course;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-
-import jakarta.transaction.Transactional;
-
 import java.util.List;
-import java.util.Optional;
+
 
 @RestController
 @RequestMapping("/api/courses")
@@ -19,22 +15,22 @@ public class CourseController {
     public List<Course> getCourses() {
         return courseService.getAllCourses();
     }
-    @GetMapping("/{code}")
-    public Optional<Course> getCourseByCode(@PathVariable String code) {
-        return courseService.getCourseByCode(code); 
+    @GetMapping("/{id}")
+    public Course getCourseById(@PathVariable Long id) {
+        return courseService.getCourseById(id); 
     }
 
-    @DeleteMapping("/{code}")
+    @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteCourseByCode(@PathVariable String code) {
-        courseService.deleteCourse(code);
+    public void deleteCourseById(@PathVariable Long id) {
+        courseService.deleteCourse(id);
     }
 
-    @PatchMapping("/{code}")
+    @PatchMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public Course partialUpdateCourse(@PathVariable String code, @RequestBody UpdateCourseRequest request)
+    public Course partialUpdateCourse(@PathVariable Long id, @RequestBody UpdateCourseRequest request)
     {
-        return courseService.partialUpdateCourse(code,request.courseName(), request.description());
+        return courseService.partialUpdateCourse(id, request.courseName(), request.description());
     }
 
     @PostMapping

@@ -29,19 +29,19 @@ public class CourseService {
         return courseRepository.save(course);
     }
     @Transactional
-    public void deleteCourse(String code)
+    public void deleteCourse(Long id)
     {
-        Optional<Course> course = courseRepository.findByCode(code);
+        Optional<Course> course = courseRepository.findById(id);
         if(course.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Course not found.");
         }
-        courseRepository.deleteByCode(code);
+        courseRepository.deleteById(id);
         
     }
 
     @Transactional 
-    public Course partialUpdateCourse(String code, String courseName, String description) {
-        Course course = courseRepository.findByCode(code)
+    public Course partialUpdateCourse(Long id, String courseName, String description) {
+        Course course = courseRepository.findById(id)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Course not found."));
         if(courseName != null) {
             course.setCourseName(courseName);
@@ -55,9 +55,9 @@ public class CourseService {
     public List<Course> getAllCourses() {
         return courseRepository.findAll();
     }
-    public Optional<Course> getCourseByCode(String code) {
-        return courseRepository.findByCode(code);
+    public Course getCourseById(Long id) {
+        Course course = courseRepository.findById(id).orElseThrow(() 
+        -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        return course;
     }
-    
-   
 }
