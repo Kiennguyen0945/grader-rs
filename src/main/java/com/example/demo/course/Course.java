@@ -1,6 +1,9 @@
 package com.example.demo.course;
 
+import com.example.demo.assignment.Assignment;
 import jakarta.persistence.*;
+import java.util.List;
+import java.util.ArrayList;
 
 @Entity
 @Table(name = "courses")
@@ -9,6 +12,9 @@ public class Course {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id; 
+
+    @OneToMany(mappedBy = "course")
+    private List<Assignment> assignments = new ArrayList<>();
 
     @Column(nullable = false, unique = true)
     private String code;
