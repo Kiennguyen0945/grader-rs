@@ -1,0 +1,19 @@
+@startuml
+left to right direction
+package "Course & Assignment Management" {
+  usecase "ManageCourses" as UC_MC
+  usecase "ManageAssignments" as UC_MA
+  usecase "ManageTestCases" as UC_MTC
+  usecase "ExportCourseResults" as UC_ECR
+  usecase "ManageCourseMembership" as UC_MCM
+  usecase "ViewCourseLeaderboard" as UC_VCL
+}
+
+actor "Lecturer" as lec
+lec -- UC_MTC
+lec -- UC_MC
+lec -- UC_MA
+lec -- UC_ECR
+lec -- UC_VCL
+lec -- UC_MCM
+@enduml

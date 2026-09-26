@@ -1,0 +1,113 @@
+@startuml
+' Cấu hình hiển thị
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam nodesep 70
+skinparam ranksep 60
+hide circle
+title GRADER SYSTEM
+
+
+class User {
++ id : Long
++ role : String
++ username : String
++ password_hash : String
++ status : String
+}
+'' role: STUDENT, LECTURER, ADMIN 
+'' status: ACTIVE, LOCKED
+
+class Course {
++ id : Long
++ code : String
++ course_name : String
++ description : String
+}
+
+class CourseUser {
++ id: Long
++ user_id : Long
++ course_id : Long
+}
+
+class Submission {
++ id : Long
++ source_code : String
++ status : String
++ grade : Decimal
++ attempt_number : Int
+}
+
+/' 
+QUEUED
+  ↓
+RUNNING
+  ├── ACCEPTED
+  ├── WRONG_ANSWER
+  ├── COMPILE_ERROR
+  ├── TIME_LIMIT_EXCEEDED
+  ├── MEMORY_LIMIT_EXCEEDED
+  ├── RUNTIME_ERROR
+  └── SYSTEM_ERROR
+'/
+
+class Assignment {
++ id : Long
++ code : String
++ title : String
++ opening_time : DateTime
++ closing_time : DateTime
++ submission_limit : Int
++ programming_language : String
++ description : String
++ assignment_status : String
+}
+
+'' assignment_status: DRAFT, PUBLISHED, CLOSED
+'' DRAFT: lecturers can edit it; students cannot see or submit it.
+'' PUBLISHED: students can see it; submissions are allowed only within the opening and closing times.
+'' CLOSED: students can view it, but cannot submit.
+
+class Test {
++ id : Long
++ name: String
++ input : Text
++ expected_output : Text
++ is_public : Boolean
+}
+'' result_status: Pass, Failed
+
+class SubmissionTest {
++ id : Long
++ submission_id : Long
++ test_id : Long
++ status : String
++ actual_output : Text
++ memory_used_kb : Long
++ execution_time_ms : Long
+}
+
+' Layout hints only (no new relationships/content) - keeps User, Course and
+' CourseUser on the same row so their mutual links stop crossing Assignment's
+' links to User and Course.
+together {
+  class User
+  class Course
+  class CourseUser
+}
+User -[hidden]right- CourseUser
+CourseUser -[hidden]right- Course
+
+Assignment "1" -- "0..*" Submission
+Assignment "1" -- "0..*" Test
+User "1" -- "0..*" Assignment : creates (role=LECTURER)
+User "1" -- "0..*" Submission : creates (role=STUDENT)
+Submission "1" -- "0..*" SubmissionTest
+Test "1" -- "0..*" SubmissionTest
+Course "1" -- "0..*" CourseUser
+User "1" -- "0..*" CourseUser
+Course "1" -- "0..*" Assignment
+
+
+@enduml
