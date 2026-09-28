@@ -42,23 +42,23 @@ public class Course {
         return code; 
     }
 
-    // Fixed: Return type changed from String to void
-    public void setCode(String code) {
-        this.code = code;
-    }
-
     public String getCourseName() {
         return courseName;
-    }
-
-    // Fixed: Return type changed from String to void
-    public void setCourseName(String courseName) {
-        this.courseName = courseName;
     }
 
     // Fixed: Returned description instead of courseName
     public String getDescription() {
         return description;
+    }
+
+    // Fixed: Return type changed from String to void
+    public void setCode(String code) {
+        this.code = code;
+    }
+
+    // Fixed: Return type changed from String to void
+    public void setCourseName(String courseName) {
+        this.courseName = courseName;
     }
 
     // Fixed: Return type changed from String to void
