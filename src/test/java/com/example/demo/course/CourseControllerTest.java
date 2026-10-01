@@ -85,7 +85,7 @@ class CourseControllerTest {
     }
 
     @Test
-    void getCourseDoesNotExist_returnNotFoun() throws Exception {
+    void getCourseDoesNotExist_returnNotFound() throws Exception {
         Long id = 999L;
         when(courseService.getCourseById(id)).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND));
         mockMvc.perform(get("/api/courses/" + id))

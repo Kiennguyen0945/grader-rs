@@ -16,7 +16,8 @@ import java.util.Optional;
 public class AssignmentService {
     private final AssignmentRepository assignmentRepository;
     private final CourseRepository courseRepository;
-    public AssignmentService(AssignmentRepository assignmentRepository, CourseRepository courseRepository) {
+    public AssignmentService(AssignmentRepository assignmentRepository, 
+        CourseRepository courseRepository) {
         this.assignmentRepository = assignmentRepository;
         this.courseRepository = courseRepository;
     }
