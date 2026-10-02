@@ -119,23 +119,24 @@ Response
 
 GET  /api/assignments/{assignmentId}/tests
 Response
-{
-  "id": 1,
-  "name": "Print",
-  "input": "",
-  "expected_output": "Hello World",
-  "is_public" : true,
-  "display_order" : 1
-}
-
-{
-  "id": 2,
-  "name": "Hello Alice",
-  "input": "Alice",
-  "expected_output": "Hello Alice!",
-  "is_public" : true,
-  "display_order" : 2
-}
+[
+    {
+        "testId": 1,
+        "name": "Print",
+        "input": "",
+        "expectedOutput": "Hello World",
+        "isPublic": false,
+        "displayOrder": 1
+    },
+    {
+        "testId": 2,
+        "name": "Hello Alice",
+        "input": "Alice",
+        "expectedOutput": "Hello Alice!",
+        "isPublic": false,
+        "displayOrder": 2
+    }
+]
 
 ## Parked
 
