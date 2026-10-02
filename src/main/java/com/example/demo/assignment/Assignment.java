@@ -1,9 +1,14 @@
 package com.example.demo.assignment;
 
-import com.example.demo.course.Course;
-import jakarta.persistence.*;
+import java.util.ArrayList;
 
-@Entity 
+import com.example.demo.course.Course;
+import com.example.demo.test.Test;
+
+import jakarta.persistence.*;
+import java.util.List;
+
+@Entity
 @Table(name = "assignments")
 public class Assignment {
     @Id
@@ -16,6 +21,9 @@ public class Assignment {
         foreignKey = @ForeignKey(name = "fk_assignment_course")
     )
     private Course course;
+    
+    @OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Test> tests = new ArrayList<>();
 
     @Column(nullable = false)
     private String code;
@@ -69,6 +77,17 @@ public class Assignment {
     }
     public void setAssignmentStatus(AssignmentStatus assignmentStatus) {
         this.assignmentStatus = assignmentStatus;
+    }
+    public void addTest(Test test) {
+        tests.add(test);
+        test.setAssignment(this);
+    }
+    public void removeTest(Test test) {
+        tests.remove(test);
+        test.setAssignment(null);
+    }
+    public List<Test> getTests() {
+        return tests;
     }
 
 }

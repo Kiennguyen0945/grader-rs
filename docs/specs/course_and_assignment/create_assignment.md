@@ -67,7 +67,7 @@ Actor: API Client
 
 1. The client sends a PATCH request to `/api/assignments/{assignmentId}`.
 2. The API searches for the assignment.
-3. The API validates the supplied fields.
+3. The API validates the supplied fields.i
 4. The API updates the assignment.
 5. The API returns the updated assignment.
 
