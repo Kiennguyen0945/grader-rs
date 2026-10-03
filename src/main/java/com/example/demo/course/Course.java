@@ -65,4 +65,18 @@ public class Course {
     public void setDescription(String description) {
         this.description = description;
     }
+
+    public void addAssignment(Assignment assignment) {
+        assignments.add(assignment);
+        assignment.setCourse(this);
+    }
+
+    public void removeAssignment(Assignment assignment) {
+        assignments.remove(assignment);
+        assignment.setCourse(null);
+    }
+
+    public List<Assignment> getAssignments() {
+        return assignments;
+    }
 }

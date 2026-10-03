@@ -3,6 +3,7 @@ package com.example.demo.assignment;
 import java.util.ArrayList;
 
 import com.example.demo.course.Course;
+import com.example.demo.submission.Submission;
 import com.example.demo.test.Test;
 import com.example.demo.user.User;
 
@@ -32,6 +33,9 @@ public class Assignment {
 
     @OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Test> tests = new ArrayList<>();
+
+    @OneToMany(mappedBy = "assignment")
+    private List<Submission> submissions = new ArrayList<>();
 
     @Column(nullable = false)
     private String code;
@@ -104,6 +108,20 @@ public class Assignment {
     }
     public List<Test> getTests() {
         return tests;
+    }
+
+    public void addSubmission(Submission submission) {
+    submissions.add(submission);
+    submission.setAssignment(this);
+}
+
+    public void removeSubmission(Submission submission) {
+        submissions.remove(submission);
+        submission.setAssignment(null);
+    }
+    
+    public List<Submission> getSubmissions() {
+        return submissions;
     }
 
 }

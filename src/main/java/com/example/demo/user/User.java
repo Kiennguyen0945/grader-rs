@@ -3,6 +3,7 @@ import java.util.ArrayList;
 
 import jakarta.persistence.*;
 import com.example.demo.assignment.Assignment;
+import com.example.demo.submission.Submission;
 
 import java.util.List;
 
@@ -12,6 +13,9 @@ public class User {
 
     @OneToMany(mappedBy = "user")
     private List<Assignment> assignments = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user")
+    private List<Submission> submissions = new ArrayList<>();
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -99,5 +103,16 @@ public class User {
         return assignments;
     }
 
+    public void addSubmission(Submission submission) {
+        submissions.add(submission);
+        submission.setUser(this);
+    }
+    public void removeSubmission(Submission submission) {
+        submissions.remove(submission);
+        submission.setUser(null);
+    }
+    public List<Submission> getSubmissions() {
+        return submissions;
+    }
 
 }
