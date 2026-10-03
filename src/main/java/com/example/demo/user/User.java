@@ -1,9 +1,18 @@
 package com.example.demo.user;
+import java.util.ArrayList;
+
 import jakarta.persistence.*;
+import com.example.demo.assignment.Assignment;
+
+import java.util.List;
 
 @Entity
 @Table(name = "users")
 public class User {
+
+    @OneToMany(mappedBy = "user")
+    private List<Assignment> assignments = new ArrayList<>();
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -76,5 +85,19 @@ public class User {
     public void setPasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
     }
+
+
+    public void addAssignment(Assignment assignment) {
+        assignments.add(assignment);
+        assignment.setUser(this);
+    }
+    public void removeAssignment(Assignment assignment) {
+        assignments.remove(assignment);
+        assignment.setUser(null);
+    }
+    public List<Assignment> getAssignments() {
+        return assignments;
+    }
+
 
 }

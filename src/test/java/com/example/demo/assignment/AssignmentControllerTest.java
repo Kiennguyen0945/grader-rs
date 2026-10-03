@@ -47,6 +47,7 @@ public class AssignmentControllerTest {
     @Test
     void createAssignmentByCourseId_returnAssignments() throws Exception {
         Long courseId = 1L;
+        Long userId = 1L;
         AssignmentService.AssignmentResponseDto assignmentResponseDto = 
             new AssignmentService.AssignmentResponseDto(
                 courseId,
@@ -56,6 +57,7 @@ public class AssignmentControllerTest {
             );
         when(assignmentService.createAssignment(
             courseId,
+            userId,
             "B001",
             "Print skibidi",
             Assignment.AssignmentStatus.DRAFT))

@@ -3,6 +3,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import com.example.demo.course.*;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -20,11 +21,11 @@ public class AssignmentController {
     }
     
     @PostMapping("/{courseId}/assignments")
-    public AssignmentService.AssignmentResponseDto createAssignmentByCourseId(@PathVariable Long courseId, @RequestBody CreateAssignmentRequest request) {
-        return assignmentService.createAssignment(courseId, request.code(), request.title(), request.assignmentStatus());
+    public AssignmentService.AssignmentResponseDto createAssignmentByCourseId(@PathVariable Long courseId,@Valid @RequestBody CreateAssignmentRequest request) {
+        return assignmentService.createAssignment(courseId, request.userId(), request.code(), request.title(), request.assignmentStatus());
     }
 
-    public record CreateAssignmentRequest(@NotBlank String code, @NotBlank String title, @NotNull Assignment.AssignmentStatus assignmentStatus) {
+    public record CreateAssignmentRequest(@NotNull Long userId, @NotBlank String code, @NotBlank String title, @NotNull Assignment.AssignmentStatus assignmentStatus) {
     }
     
 }

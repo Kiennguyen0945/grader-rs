@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import com.example.demo.course.Course;
 import com.example.demo.test.Test;
+import com.example.demo.user.User;
 
 import jakarta.persistence.*;
 import java.util.List;
@@ -22,6 +23,13 @@ public class Assignment {
     )
     private Course course;
     
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(
+        name = "user_id", nullable = false,
+        foreignKey =  @ForeignKey(name = "fk_assignment_user")
+    )
+    private User user;
+
     @OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Test> tests = new ArrayList<>();
 
@@ -38,8 +46,9 @@ public class Assignment {
 
     protected Assignment() {
     }
-    public Assignment(Course course, String code, String title, AssignmentStatus assignmentStatus) {
+    public Assignment(Course course, User user, String code, String title, AssignmentStatus assignmentStatus) {
         this.course = course;
+        this.user = user;
         this.code = code;
         this.title = title;
         this.assignmentStatus = assignmentStatus;
@@ -66,6 +75,13 @@ public class Assignment {
     public AssignmentStatus getAssignmentStatus() {
         return assignmentStatus;
     }
+    public User getUser() {
+        return user;
+    }
+    public void setUser(User user) {
+        this.user = user;
+    }
+
     public void setCourse(Course course) {
         this.course = course;
     }
