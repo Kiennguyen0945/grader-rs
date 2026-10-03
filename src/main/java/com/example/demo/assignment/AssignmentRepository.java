@@ -5,5 +5,5 @@ import java.util.*;
 
 public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
     boolean existsByCourseIdAndCode(Long courseId, String code);
-    List<Assignment> findByCourseId(Long courseId);
+    List<Assignment> findByCourseIdAndUserId(Long courseId, Long userId);
 } 

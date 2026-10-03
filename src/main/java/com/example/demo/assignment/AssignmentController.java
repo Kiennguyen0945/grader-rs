@@ -16,12 +16,12 @@ public class AssignmentController {
     }
 
     @GetMapping("/{courseId}/assignments")
-    public List<AssignmentService.AssignmentResponseDto> getAssignmentsByCourseId(@PathVariable Long courseId) {
-        return assignmentService.getAssignmentsByCourseId(courseId);
+    public List<AssignmentService.AssignmentResponseDto> getAssignmentsByCourseId(@PathVariable Long courseId, @RequestParam Long userId) {
+        return assignmentService.getAssignmentsByCourseIdAndUserId(courseId, userId);
     }
     
     @PostMapping("/{courseId}/assignments")
-    public AssignmentService.AssignmentResponseDto createAssignmentByCourseId(@PathVariable Long courseId,@Valid @RequestBody CreateAssignmentRequest request) {
+    public AssignmentService.AssignmentResponseDto createAssignmentByCourseId(@PathVariable Long courseId, @Valid @RequestBody CreateAssignmentRequest request) {
         return assignmentService.createAssignment(courseId, request.userId(), request.code(), request.title(), request.assignmentStatus());
     }
 

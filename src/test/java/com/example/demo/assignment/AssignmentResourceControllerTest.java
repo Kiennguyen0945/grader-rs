@@ -36,6 +36,8 @@ public class AssignmentResourceControllerTest {
         AssignmentService.AssignmentResponseDto assignmentResponseDto = 
             new AssignmentService.AssignmentResponseDto(
                 courseId,
+                1L,
+                1L,
                 "B001",
                 "Print skibidi", 
                 Assignment.AssignmentStatus.DRAFT
@@ -52,6 +54,8 @@ public class AssignmentResourceControllerTest {
         AssignmentService.AssignmentResponseDto assignmentResponseDto = 
             new AssignmentService.AssignmentResponseDto(
                 assignmentId,
+                1L,
+                1L,
                 "B001",
                 "Print skibidi", 
                 Assignment.AssignmentStatus.DRAFT
