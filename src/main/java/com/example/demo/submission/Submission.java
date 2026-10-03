@@ -36,7 +36,7 @@ public class Submission {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
         name = "assignment_id", 
         nullable = false,
@@ -44,7 +44,7 @@ public class Submission {
     )
     private Assignment assignment;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
         name = "user_id",
         nullable = false,
