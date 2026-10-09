@@ -6,11 +6,13 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.example.demo.assignment.Assignment;
 import com.example.demo.assignment.AssignmentRepository;
+import com.example.demo.grading.GradingService;
 import com.example.demo.user.User;
 import com.example.demo.user.UserRepository;
 
 import jakarta.transaction.Transactional;
 
+import java.io.IOException;
 import java.util.List;
 
 @Service 
@@ -18,14 +20,17 @@ public class SubmissionService {
     private final SubmissionRepository submissionRepository;
     private final AssignmentRepository assignmentRepository;
     private final UserRepository userRepository;
+    private final GradingService gradingService;
     public SubmissionService(
         SubmissionRepository submissionRepository,
         AssignmentRepository assignmentRepository,
-        UserRepository userRepository
+        UserRepository userRepository,
+        GradingService gradingService
     ) {
         this.submissionRepository = submissionRepository;
         this.assignmentRepository = assignmentRepository;
         this.userRepository = userRepository;
+        this.gradingService = gradingService;
     }
     @Transactional
     public SubmissionResponseDto createSubmissionByAssignmentIdAndUserId(
@@ -63,7 +68,11 @@ public class SubmissionService {
             null,
             attemptNumber
         );
-
+        try {
+            gradingService.grade(submission);    
+        } catch (IOException e) {
+            submission.setStatus(Submission.Status.SYSTEM_ERROR);
+        }
         return SubmissionResponseDto.fromEntity(
             submissionRepository.save(submission)
         );
