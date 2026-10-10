@@ -1,6 +1,12 @@
 package com.example.demo.course;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+
 import java.util.List;
 
 
@@ -28,7 +34,7 @@ public class CourseController {
 
     @PatchMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public Course partialUpdateCourse(@PathVariable Long id, @RequestBody UpdateCourseRequest request)
+    public Course partialUpdateCourse(@PathVariable Long id, @Valid @RequestBody UpdateCourseRequest request)
     {
         return courseService.partialUpdateCourse(id, request.courseName(), request.description());
     }
@@ -36,13 +42,14 @@ public class CourseController {
     @PostMapping
     public Course createCourse (@RequestBody CreateCourseRequest request) {
         return courseService.createCourse(
+            request.userId(),
             request.code(),
             request.courseName(),
             request.description()
         );
     }
 
-    public record CreateCourseRequest (String code, String courseName,String description) {
+    public record CreateCourseRequest (@NotNull Long userId, @NotBlank String code, @NotBlank String courseName, String description) {
     }
     public record UpdateCourseRequest (String courseName, String description){
 

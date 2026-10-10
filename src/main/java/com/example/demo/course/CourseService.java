@@ -1,6 +1,10 @@
 package com.example.demo.course;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+
+import com.example.demo.user.User;
+import com.example.demo.user.UserRepository;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -10,14 +14,18 @@ import java.util.Optional;
 @Service
 public class CourseService {
     private final CourseRepository courseRepository;
-    public CourseService(CourseRepository courseRepository) {
+    private final UserRepository userRepository;
+    public CourseService(CourseRepository courseRepository, UserRepository userRepository) {
         this.courseRepository = courseRepository;
+        this.userRepository = userRepository;
     }
     public Course createCourse (
+        Long userId,
         String code,
         String courseName,
         String description
     ) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found."));
         if (courseRepository.existsByCode(code)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Course already exists.");
         }
@@ -26,6 +34,7 @@ public class CourseService {
             courseName,
             description
         );
+        course.addUser(user);
         return courseRepository.save(course);
     }
     @Transactional
