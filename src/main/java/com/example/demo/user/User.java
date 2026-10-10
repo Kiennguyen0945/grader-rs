@@ -3,6 +3,7 @@ import java.util.ArrayList;
 
 import jakarta.persistence.*;
 import com.example.demo.assignment.Assignment;
+import com.example.demo.courseUser.CourseUser;
 import com.example.demo.submission.Submission;
 
 import java.util.List;
@@ -16,6 +17,9 @@ public class User {
 
     @OneToMany(mappedBy = "user")
     private List<Submission> submissions = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user")
+    private List<CourseUser> courseUsers = new ArrayList<>();
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -74,6 +78,11 @@ public class User {
     public Status getStatus() {
         return status;
     }
+
+    public List<CourseUser> getCourseUsers() {
+        return courseUsers;
+    }
+
     public void setStatus(Status status) {
         this.status = status;
     }
@@ -115,4 +124,7 @@ public class User {
         return submissions;
     }
 
+    public void addCourseUser(CourseUser courseUser) {
+        courseUsers.add(courseUser);
+    }
 }

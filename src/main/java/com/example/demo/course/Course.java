@@ -1,6 +1,9 @@
 package com.example.demo.course;
 
 import com.example.demo.assignment.Assignment;
+import com.example.demo.courseUser.CourseUser;
+import com.example.demo.user.User;
+
 import jakarta.persistence.*;
 import java.util.List;
 import java.util.ArrayList;
@@ -15,6 +18,9 @@ public class Course {
 
     @OneToMany(mappedBy = "course")
     private List<Assignment> assignments = new ArrayList<>();
+
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CourseUser> courseUsers = new ArrayList<>();
 
     @Column(nullable = false, unique = true)
     private String code;
@@ -51,6 +57,10 @@ public class Course {
         return description;
     }
 
+    public List<CourseUser> getCourseUsers() {
+        return courseUsers;
+    }
+
     // Fixed: Return type changed from String to void
     public void setCode(String code) {
         this.code = code;
@@ -79,4 +89,11 @@ public class Course {
     public List<Assignment> getAssignments() {
         return assignments;
     }
+
+    public void addUser(User user) {
+        CourseUser courseUser = new CourseUser(this, user);
+        courseUsers.add(courseUser);
+        user.addCourseUser(courseUser);
+    }
+    
 }
