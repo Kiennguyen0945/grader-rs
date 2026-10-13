@@ -19,6 +19,7 @@ public class CourseService {
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
     }
+    @Transactional
     public Course createCourse (
         Long userId,
         String code,

@@ -5,6 +5,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.example.demo.assignment.AssignmentRepository;
+
+import jakarta.transaction.Transactional;
+
 import com.example.demo.assignment.Assignment;
 import java.util.List;
 
@@ -21,6 +24,7 @@ public class TestService {
         return testRepository.findByAssignmentId(assignmentId).stream().map(TestResponseDto::fromEntity).toList();
     }
 
+  
     public TestResponseDto createTestByAssignmentId(Long assignmentId, String name, String input, String expectedOutput, boolean isPublic) {
         Assignment assignment = assignmentRepository.findById(assignmentId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assignment Not Found."));
         int displayOrder = testRepository.countByAssignmentId(assignmentId);

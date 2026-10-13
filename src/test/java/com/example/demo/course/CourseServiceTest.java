@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any; // Added missing import
 import static org.mockito.Mockito.*;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,21 +13,37 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.example.demo.user.User;
+import com.example.demo.user.UserRepository;
+
+
 
 @ExtendWith(MockitoExtension.class)
 class CourseServiceTest {
     @Mock
     private CourseRepository courseRepository;
 
+    @Mock
+    private UserRepository userRepository;
+
     @InjectMocks
     private CourseService courseService;
 
+
     @Test
     void createCourse_saveNewCourse() {
+        Long userId = 1L;
+        User user = new User(
+            "Fors",
+            User.Role.STUDENT,
+            User.Status.ACTIVE,
+            "strong-password"
+        );
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(courseRepository.existsByCode("CS505")).thenReturn(false);
         Course savedCourse = new Course("CS505", "Harvard Course", "");
         when(courseRepository.save(any(Course.class))).thenReturn(savedCourse);
-        Course result = courseService.createCourse("CS505", "Harvard Course", "");
+        Course result = courseService.createCourse(userId, "CS505", "Harvard Course", "");
         assertEquals("CS505", result.getCode());
         assertEquals("Harvard Course", result.getCourseName());
         verify(courseRepository).save(any(Course.class));

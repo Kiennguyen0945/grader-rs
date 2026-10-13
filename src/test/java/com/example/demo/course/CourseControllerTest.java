@@ -23,6 +23,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.example.demo.user.UserRepository;
+
 import tools.jackson.databind.ObjectMapper;
 
 @WebMvcTest(CourseController.class)
@@ -31,6 +33,10 @@ class CourseControllerTest {
     private MockMvc mockMvc;
     @MockitoBean
     private CourseService courseService;
+
+    @MockitoBean
+    private UserRepository UserRepository;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
     @Test 
     void  getCourses_returnsCourses() throws Exception {
@@ -42,12 +48,15 @@ class CourseControllerTest {
     }
     @Test
     void createCourse_saveNewCourse() throws Exception {
+        Long userId = 1L;
+        CourseController.CreateCourseRequest createCourseRequest = 
+        new CourseController.CreateCourseRequest(userId, "CS505", "Harvard", "");
         Course course = new Course("CS505", "Harvard", "");
-        when(courseService.createCourse("CS505", "Harvard", "")).thenReturn(course);
+        when(courseService.createCourse(userId, "CS505", "Harvard", "")).thenReturn(course);
         mockMvc.perform(
             post("/api/courses")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(course)))   
+                .content(objectMapper.writeValueAsString(createCourseRequest)))   
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.code").value("CS505"));
     }
