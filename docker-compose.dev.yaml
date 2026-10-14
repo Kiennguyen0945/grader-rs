@@ -2,6 +2,7 @@ services:
   grader-backend:
     depends_on:
       - grader-postgres
+      - grader-rabbitmq
     build:
       context: .
       dockerfile: Dockerfile.backend.yaml
@@ -37,6 +38,15 @@ services:
       PGADMIN_DEFAULT_PASSWORD: secret
       PGADMIN_CONFIG_SERVER_MODE: "False"
       PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+  
+  grader-rabbitmq:
+    image: rabbitmq:4-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
 
 volumes:
   grader-postgres-data:

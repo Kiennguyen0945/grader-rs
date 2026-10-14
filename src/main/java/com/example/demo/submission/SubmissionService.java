@@ -1,36 +1,36 @@
 package com.example.demo.submission;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.example.demo.assignment.Assignment;
 import com.example.demo.assignment.AssignmentRepository;
-import com.example.demo.grading.GradingService;
+import com.example.demo.rabbitmq.SubmissionProducer;
 import com.example.demo.user.User;
 import com.example.demo.user.UserRepository;
 
 import jakarta.transaction.Transactional;
 
-import java.io.IOException;
 import java.util.List;
 
 @Service 
 public class SubmissionService {
+    @Autowired 
+    private SubmissionProducer producer;
+
     private final SubmissionRepository submissionRepository;
     private final AssignmentRepository assignmentRepository;
     private final UserRepository userRepository;
-    private final GradingService gradingService;
     public SubmissionService(
         SubmissionRepository submissionRepository,
         AssignmentRepository assignmentRepository,
-        UserRepository userRepository,
-        GradingService gradingService
+        UserRepository userRepository
     ) {
         this.submissionRepository = submissionRepository;
         this.assignmentRepository = assignmentRepository;
         this.userRepository = userRepository;
-        this.gradingService = gradingService;
     }
     @Transactional
     public SubmissionResponseDto createSubmissionByAssignmentIdAndUserId(
@@ -68,13 +68,11 @@ public class SubmissionService {
             null,
             attemptNumber
         );
-        try {
-            gradingService.grade(submission);    
-        } catch (IOException e) {
-            submission.setStatus(Submission.Status.SYSTEM_ERROR);
-        }
+
+        Submission savedSubmission = submissionRepository.save(submission);
+        producer.send(String.valueOf(savedSubmission.getId()));
         return SubmissionResponseDto.fromEntity(
-            submissionRepository.save(submission)
+            savedSubmission
         );
     }
     public List<SubmissionResponseDto> getSubmissionsByAssignmentIdAndUserId(
