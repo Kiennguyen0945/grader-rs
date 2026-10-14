@@ -1,6 +1,7 @@
 package com.example.demo.grading;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -80,7 +81,7 @@ class GradingServiceTest {
             true
         );
     }
-
+    
     @Test
     void validHelloWorld_returnsAccepted() throws IOException {
         Assignment assignmentEntity = assignmentRepository.findById(assignment.id())
@@ -109,4 +110,142 @@ class GradingServiceTest {
         assertEquals(10.0, submission.getGrade());
     }
     
+    @Test 
+    void wrongHelloWorld_returnsWrongAnswer() throws IOException {
+        Assignment assignmentEntity = assignmentRepository.findById(assignment.id())
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assignment not found."));
+        String sourceCode = """
+            public class Main {
+                public static void main(String[] args) {
+                    System.out.println("Hello May Cung");
+                }
+            }
+            """;
+        Submission submission = new Submission(
+            assignmentEntity,
+            user,
+            sourceCode,
+            Submission.Status.QUEUED,
+            null,
+            1  
+        );
+        gradingService.grade(submission);
+        assertEquals(
+            Submission.Status.WRONG_ANSWER,
+            submission.getStatus()
+        );
+        assertEquals(0.0, submission.getGrade());
+    }
+    @Test
+    void invalidCode_returnsCompileError() throws IOException {
+        Assignment assignmentEntity = assignmentRepository.findById(assignment.id())
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assignment not found."));
+        String sourceCode = """
+            public class Main  {
+                public static void main(String[] args) {
+                    System.out.println("Hello May Cung);
+                }
+            }
+            """;
+        Submission submission = new Submission(
+            assignmentEntity,
+            user,
+            sourceCode,
+            Submission.Status.QUEUED,
+            null,
+            1  
+        );
+        gradingService.grade(submission);
+        assertEquals(
+            Submission.Status.COMPILE_ERROR,
+            submission.getStatus()
+        );
+        assertEquals(0.0, submission.getGrade());
+    }
+
+    @Test
+    void infiniteLoop_returnsTimeLimitExceed() throws IOException {
+        Assignment assignmentEntity = assignmentRepository.findById(assignment.id())
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assignment not found."));
+        String sourceCode = """
+            public class Main  {
+                public static void main(String[] args) {
+                    int i = 1;
+                    while(i > 0) {
+                        System.out.println(i);
+                    }
+                }
+            }
+            """;
+        Submission submission = new Submission(
+            assignmentEntity,
+            user,
+            sourceCode,
+            Submission.Status.QUEUED,
+            null,
+            1  
+        );
+        gradingService.grade(submission);
+        assertEquals(
+            Submission.Status.TIME_LIMIT_EXCEEDED,
+            submission.getStatus()
+        );
+        assertEquals(0.0, submission.getGrade());
+    }
+
+    @Test
+    void devideByZero_returnsRuntimeError() throws IOException {
+        Assignment assignmentEntity = assignmentRepository.findById(assignment.id())
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assignment not found."));
+        String sourceCode = """
+            public class Main  {
+                public static void main(String[] args) {
+                    int a = 1 / 0;
+                    System.out.println(a);
+                }
+            }
+            """;
+        Submission submission = new Submission(
+            assignmentEntity,
+            user,
+            sourceCode,
+            Submission.Status.QUEUED,
+            null,
+            1  
+        );
+        gradingService.grade(submission);
+        assertEquals(
+            Submission.Status.RUNTIME_ERROR,
+            submission.getStatus()
+        );
+        assertEquals(0.0, submission.getGrade());
+    }
+    @Test
+    void assignmentHasNoTestCase_returnsIllegalStateException() throws IOException {
+        Assignment assignmentWithoutTest = new Assignment(course, user, "CS001", "Bye", Assignment.AssignmentStatus.PUBLISHED);
+        assignmentRepository.save(assignmentWithoutTest);
+        String sourceCode = """
+            public class Main  {
+                public static void main(String[] args) {
+                    int a = 1 / 0;
+                    System.out.println(a);
+                }
+            }
+            """;
+        Submission submission = new Submission(
+            assignmentWithoutTest,
+            user,
+            sourceCode,
+            Submission.Status.QUEUED,
+            null,
+            1  
+        );
+
+        IllegalStateException exception = 
+            assertThrows(IllegalStateException.class
+                , () -> gradingService.grade(submission));
+
+        assertEquals("Assignment has no test cases.", exception.getMessage());
+        assertEquals(Submission.Status.SYSTEM_ERROR, submission.getStatus()); 
+    }
 }
