@@ -47,6 +47,22 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
+    
+  grader-worker:
+    build:
+      context: ./grader-worker
+      dockerfile: Dockerfile.grader-worker.yaml
+    depends_on:
+      - grader-postgres
+      - grader-rabbitmq
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://grader-postgres:5432/grader
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_RABBITMQ_HOST: grader-rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
 
 volumes:
   grader-postgres-data:
