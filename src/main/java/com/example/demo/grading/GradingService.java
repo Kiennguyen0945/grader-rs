@@ -28,21 +28,16 @@ import jakarta.transaction.Transactional;
 @Service
 
 public class GradingService {
+    private static final long PROCESS_TIMEOUT_SECONDS = 2;
+    private static final double FULL_GRADE = 10D; 
     private final AssignmentRepository assignmentRepository;
     public GradingService(AssignmentRepository assignmentRepository) {
         this.assignmentRepository = assignmentRepository;
     }
     @Transactional 
    public void grade(Submission submission) throws IOException {
-        Assignment assignment = 
-            assignmentRepository
-            .findById(submission.getAssignment().getId())
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assignment not found."));
-        int testsCount = assignment.getTests().size();
-        if (testsCount == 0) {
-            submission.setStatus(Submission.Status.SYSTEM_ERROR);
-            throw new IllegalStateException("Assignment has no test cases.");
-        }
+        Assignment assignment = findAssignment(submission);
+        validateAssignment(assignment, submission);
         Path tempDir = Files.createTempDirectory("runner-");
         try {
             Path mainJava = tempDir.resolve("Main.java");
@@ -51,25 +46,16 @@ public class GradingService {
             ProcessBuilder compileBuilder = new ProcessBuilder("javac", mainJava.toAbsolutePath().toString());
             Process compileProcess = compileBuilder.start();
             try {
-                boolean finished = compileProcess.waitFor(2, TimeUnit.SECONDS);
+                boolean finished = compileProcess.waitFor(PROCESS_TIMEOUT_SECONDS, TimeUnit.SECONDS);
                 if (!finished) {
-                    compileProcess.destroy();
-                    if(compileProcess.isAlive()) {
-                        compileProcess.destroyForcibly();
-                    }
-                    submission.setStatus(Submission.Status.TIME_LIMIT_EXCEEDED);
-                    submission.setGrade(0D);
+                    stopProcess(compileProcess);
+                    markAsFailed(submission, Submission.Status.TIME_LIMIT_EXCEEDED);
                     throw new RuntimeException("Process timed out after 2 seconds.");
                 }
-                String stderr;
-                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(compileProcess.getErrorStream()))) {
-                        stderr = reader.lines().collect(Collectors.joining(System.lineSeparator()));
-                    }
                 int compileExitCode = compileProcess.exitValue();
                 if (compileExitCode != 0) {
-                    submission.setStatus(Submission.Status.COMPILE_ERROR);
-                    submission.setGrade(0D);
-                    throw new IllegalStateException(stderr);
+                    markAsFailed(submission, Submission.Status.COMPILE_ERROR);
+                    return;
                 }
             } catch (InterruptedException e) {
                 submission.setStatus(Submission.Status.SYSTEM_ERROR);
@@ -88,20 +74,15 @@ public class GradingService {
                         }
                     }
                     
-                    boolean finished = runProcess.waitFor(2, TimeUnit.SECONDS);
+                    boolean finished = runProcess.waitFor(PROCESS_TIMEOUT_SECONDS, TimeUnit.SECONDS);
                     if (!finished) {
-                        runProcess.destroy();
-                        if(runProcess.isAlive()) {
-                            runProcess.destroyForcibly();
-                        }
-                        submission.setStatus(Submission.Status.TIME_LIMIT_EXCEEDED);
-                        submission.setGrade(0D);
-                        throw new RuntimeException("Process timed out after 2 seconds.");
+                        stopProcess(runProcess);
+                        markAsFailed(submission, Submission.Status.TIME_LIMIT_EXCEEDED);
+                        return;
                     }
                     int runExitCode = runProcess.exitValue();
                     if(runExitCode != 0) {
-                        submission.setStatus(Submission.Status.RUNTIME_ERROR);
-                        submission.setGrade(0D);
+                        markAsFailed(submission, Submission.Status.RUNTIME_ERROR);
                         return;
                     }
                     String stdout;
@@ -113,8 +94,7 @@ public class GradingService {
                         testsPassedCount += 1;
                     }
                     else {
-                        submission.setStatus(Submission.Status.WRONG_ANSWER);
-                        submission.setGrade(0D);
+                        markAsFailed(submission, Submission.Status.WRONG_ANSWER);
                         return;
                     }
 
@@ -125,8 +105,7 @@ public class GradingService {
                 }
             }
             if (testsPassedCount == assignment.getTests().size()) {
-                submission.setStatus(Submission.Status.ACCEPTED);
-                submission.setGrade(10D);
+                markAsAccepted(submission);
                 return;
             }
         } finally {
@@ -141,6 +120,38 @@ public class GradingService {
                     });
             }
         }
+   }
+
+   private Assignment findAssignment(Submission submission) {
+        Assignment assignment = 
+            assignmentRepository
+            .findById(submission.getAssignment().getId())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assignment not found."));
+            return assignment;
+   }
+
+   private void validateAssignment(Assignment assignment, Submission submission) {
+        int testsCount = assignment.getTests().size();
+        if (testsCount == 0) {
+            submission.setStatus(Submission.Status.SYSTEM_ERROR);
+            throw new IllegalStateException("Assignment has no test cases.");
+        }
+   }
+
+   private void stopProcess(Process process) {
+        process.destroy();
+        if(process.isAlive()) {
+            process.destroyForcibly();
+        }
+   }
+
+   private void markAsFailed(Submission submission, Submission.Status status) {
+    submission.setStatus(status);
+    submission.setGrade(0D);
+   }
+   private void markAsAccepted(Submission submission) {
+     submission.setStatus(Submission.Status.ACCEPTED);
+     submission.setGrade(FULL_GRADE);
    }
 
 }
