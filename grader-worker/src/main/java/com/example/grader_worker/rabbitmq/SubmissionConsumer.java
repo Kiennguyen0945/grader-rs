@@ -1,15 +1,14 @@
-package com.example.demo.rabbitmq;
+package com.example.grader_worker.rabbitmq;
 
 import java.io.IOException;
 
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
-import org.springframework.web.server.ResponseStatusException;
 
-import com.example.demo.grading.GradingService;
-import com.example.demo.submission.Submission;
-import com.example.demo.submission.SubmissionRepository;
+
+import com.example.grader_worker.grading.GradingService;
+import com.example.grader_worker.submission.Submission;
+import com.example.grader_worker.submission.SubmissionRepository;
 
 @Component
 public class SubmissionConsumer {
@@ -25,7 +24,7 @@ public class SubmissionConsumer {
     public void receiveMessage(String message) {
         Submission submission = submissionRepository.findById(Long.parseLong(message))
         .orElseThrow(
-            () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Submission not found."));
+            () -> new IllegalStateException("Submission not found: " + message));
         try {
             gradingService.grade(submission);
             submissionRepository.save(submission);
