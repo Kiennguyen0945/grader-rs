@@ -6,8 +6,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.example.demo.assignment.AssignmentRepository;
 
-import jakarta.transaction.Transactional;
-
 import com.example.demo.assignment.Assignment;
 import java.util.List;
 

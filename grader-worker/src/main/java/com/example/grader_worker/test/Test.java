@@ -2,7 +2,12 @@ package com.example.grader_worker.test;
 
 
 import com.example.grader_worker.assignment.Assignment;
+import com.example.grader_worker.submissiontest.SubmissionTest;
 import jakarta.persistence.*;
+
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "tests", uniqueConstraints = @UniqueConstraint(
@@ -17,6 +22,9 @@ public class Test {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assignment_id", nullable = false, foreignKey = @ForeignKey(name = "fk_test_assignment"))
     private Assignment assignment;
+
+    @OneToMany(mappedBy = "test")
+    private List<SubmissionTest> submissionTests = new ArrayList<>();
 
     @Column
     private String name;

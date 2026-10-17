@@ -12,9 +12,7 @@ import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import com.example.demo.assignment.Assignment;
 import com.example.demo.assignment.AssignmentRepository;
@@ -126,7 +124,7 @@ public class GradingService {
         Assignment assignment = 
             assignmentRepository
             .findById(submission.getAssignment().getId())
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assignment not found."));
+            .orElseThrow(() -> new IllegalStateException("Assignment not found."));
             return assignment;
    }
 

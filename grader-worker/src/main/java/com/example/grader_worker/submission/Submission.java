@@ -1,19 +1,11 @@
 package com.example.grader_worker.submission;
 
 import com.example.grader_worker.assignment.Assignment;
+import com.example.grader_worker.submissiontest.SubmissionTest;
+import jakarta.persistence.*;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.ForeignKey;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "submissions")
@@ -42,6 +34,10 @@ public class Submission {
         foreignKey = @ForeignKey(name = "fk_submission_assignment")
     )
     private Assignment assignment;
+
+    @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<SubmissionTest> submissionTests = new ArrayList<>();
+
 
     @Column(columnDefinition = "TEXT")
     private String sourceCode;
