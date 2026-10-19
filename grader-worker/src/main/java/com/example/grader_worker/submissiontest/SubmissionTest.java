@@ -55,7 +55,7 @@ public class SubmissionTest {
     @Column(columnDefinition = "TEXT")
     private String actualOutput;
 
-    private Long memoryUsedKb;
+    private Long memoryUsedKob;
 
     private Long executionTimeMs;
 
@@ -67,13 +67,13 @@ public class SubmissionTest {
             Test test,
             Status status,
             String actualOutput,
-            Long memoryUsedKb,
+            Long memoryUsedKi,
             Long executionTimeMs) {
         this.submission = submission;
         this.test = test;
         this.status = status;
         this.actualOutput = actualOutput;
-        this.memoryUsedKb = memoryUsedKb;
+        this.memoryUsedKib = memoryUsedKib;
         this.executionTimeMs = executionTimeMs;
     }
 
@@ -113,12 +113,12 @@ public class SubmissionTest {
         this.actualOutput = actualOutput;
     }
 
-    public Long getMemoryUsedKb() {
-        return memoryUsedKb;
+    public Long getMemoryUsedKib() {
+        return memoryUsedKib;
     }
 
-    public void setMemoryUsedKb(Long memoryUsedKb) {
-        this.memoryUsedKb = memoryUsedKb;
+    public void setMemoryUsedKib(Long memoryUsedKib) {
+        this.memoryUsedKib = memoryUsedKib;
     }
 
     public Long getExecutionTimeMs() {
