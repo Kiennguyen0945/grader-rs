@@ -10,7 +10,8 @@ import jakarta.persistence.*;
 @Table(name = "submission_tests",
     uniqueConstraints = {
         @UniqueConstraint(
-            columnNames = {"submission_id", "test_id"}
+            name = "uk_submission_test_run",
+            columnNames = {"submission_id", "test_id", "grading_run_id"}
         )
     }
 )
@@ -19,13 +20,14 @@ public class SubmissionTest {
     public enum Status {
         QUEUED,
         RUNNING,
-        ACCEPTED,
+        PASSED,
         WRONG_ANSWER,
         COMPILE_ERROR,
         TIME_LIMIT_EXCEEDED,
         MEMORY_LIMIT_EXCEEDED,
         RUNTIME_ERROR,
-        SYSTEM_ERROR
+        SYSTEM_ERROR,
+        NOT_RUN
     }
 
     @Id
@@ -55,9 +57,15 @@ public class SubmissionTest {
     @Column(columnDefinition = "TEXT")
     private String actualOutput;
 
-    private Long memoryUsedKob;
+    @Column(name = "memory_used_kib")
+    private Long memoryUsedKib;
 
+    @Column(name = "execution_time_ms")
     private Long executionTimeMs;
+
+
+    @Column(name = "grading_run_id", nullable = false)
+    private Long gradingRunId;
 
     protected SubmissionTest() {
     }
@@ -67,14 +75,16 @@ public class SubmissionTest {
             Test test,
             Status status,
             String actualOutput,
-            Long memoryUsedKi,
-            Long executionTimeMs) {
+            Long memoryUsedKib,
+            Long executionTimeMs, 
+            Long gradingRunId) {
         this.submission = submission;
         this.test = test;
         this.status = status;
         this.actualOutput = actualOutput;
         this.memoryUsedKib = memoryUsedKib;
         this.executionTimeMs = executionTimeMs;
+        this.gradingRunId = gradingRunId;
     }
 
     public Long getId() {
@@ -127,5 +137,13 @@ public class SubmissionTest {
 
     public void setExecutionTimeMs(Long executionTimeMs) {
         this.executionTimeMs = executionTimeMs;
+    }
+
+    public Long getGradingRunId() {
+        return gradingRunId;
+    }
+
+    public void setGradingRunId(Long gradingRunId) {
+        this.gradingRunId = gradingRunId;
     }
 }
