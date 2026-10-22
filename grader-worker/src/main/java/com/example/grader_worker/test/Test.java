@@ -41,6 +41,8 @@ public class Test {
     @Column(nullable = false)
     private int displayOrder;
 
+    @Column
+    private Long memoryLimitKib;
 
     // Constructors
     public Test() {}
@@ -109,6 +111,14 @@ public class Test {
 
     public void setDisplayOrder(int displayOrder) {
         this.displayOrder = displayOrder;
+    }
+
+    public Long memoryLimitKib() {
+        return memoryLimitKib;
+    }
+
+    public void memoryLimitKib(Long memoryLimitKib) {
+        this.memoryLimitKib = memoryLimitKib;
     }
 
 }
