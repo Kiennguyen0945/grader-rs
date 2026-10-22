@@ -41,6 +41,7 @@ public class Test {
     @Column(nullable = false)
     private int displayOrder;
 
+
     // Constructors
     public Test() {}
 
@@ -109,4 +110,5 @@ public class Test {
     public void setDisplayOrder(int displayOrder) {
         this.displayOrder = displayOrder;
     }
+
 }

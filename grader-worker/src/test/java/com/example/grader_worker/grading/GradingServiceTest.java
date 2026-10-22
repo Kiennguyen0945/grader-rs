@@ -15,11 +15,19 @@ import org.mockito.MockitoAnnotations;
 import com.example.grader_worker.assignment.Assignment;
 import com.example.grader_worker.assignment.AssignmentRepository;
 import com.example.grader_worker.submission.Submission;
+import com.example.grader_worker.submission.SubmissionRepository;
+import com.example.grader_worker.submissiontest.SubmissionTestRepository;
 
 class GradingServiceTest {
 
     @Mock
     private AssignmentRepository assignmentRepository;
+
+    @Mock
+    private SubmissionTestRepository submissionTestRepository;
+
+    @Mock
+    private SubmissionRepository submissionRepository;
 
     private GradingService gradingService;
     private Assignment assignment;
@@ -27,7 +35,7 @@ class GradingServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        gradingService = new GradingService(assignmentRepository);
+        gradingService = new GradingService(assignmentRepository, submissionTestRepository, submissionRepository);
 
         assignment = new Assignment(
             "A001",
