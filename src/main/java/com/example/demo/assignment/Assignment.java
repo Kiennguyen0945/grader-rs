@@ -1,6 +1,8 @@
 package com.example.demo.assignment;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import com.example.demo.course.Course;
 import com.example.demo.submission.Submission;
@@ -9,6 +11,7 @@ import com.example.demo.user.User;
 
 import jakarta.persistence.*;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "assignments")
@@ -37,25 +40,62 @@ public class Assignment {
     @OneToMany(mappedBy = "assignment")
     private List<Submission> submissions = new ArrayList<>();
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50)
     private String code;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 200)
     private String title;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private AssignmentStatus assignmentStatus;
 
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    @Column
+    private LocalDateTime openingTime;
+
+    @Column
+    private LocalDateTime closingTime;
+
+    @ElementCollection
+    @Enumerated(EnumType.STRING)
+    @CollectionTable(
+        name = "assignment_allowed_languages",
+        joinColumns = @JoinColumn(name = "assignment_id")
+    )
+    @Column(name = "language", nullable = false)
+    private Set<ProgrammingLanguage> allowedLanguages = new HashSet<>();
+
+    @Column
+    private Integer submissionLimit;
 
     protected Assignment() {
     }
-    public Assignment(Course course, User user, String code, String title, AssignmentStatus assignmentStatus) {
+    public Assignment(
+            Course course, 
+            User user, 
+            String code, 
+            String title, 
+            AssignmentStatus assignmentStatus,
+            String description,
+            Integer submissionLimit,
+            LocalDateTime openingTime,
+            LocalDateTime closingTime,
+            Set<ProgrammingLanguage> allowedLanguages
+        ) {
+        validateTimes(openingTime, closingTime);
         this.course = course;
         this.user = user;
         this.code = code;
         this.title = title;
         this.assignmentStatus = assignmentStatus;
+        this.description = description;
+        setSubmissionLimit(submissionLimit);
+        this.openingTime = openingTime;
+        this.closingTime = closingTime;
+        this.allowedLanguages = allowedLanguages == null ? new HashSet<>() : new HashSet<>(allowedLanguages);
     }
 
     public enum AssignmentStatus {
@@ -63,7 +103,27 @@ public class Assignment {
         PUBLISHED,
         CLOSED
     }
+    public enum ProgrammingLanguage {
+        JAVA,
+        PYTHON
+    }
 
+    private static void validateTimes(
+        LocalDateTime openingTime,
+        LocalDateTime closingTime
+    ) {
+        if (openingTime != null
+                && closingTime != null
+                && !closingTime.isAfter(openingTime)) {
+            throw new IllegalArgumentException(
+                "closingTime must be after openingTime"
+            );
+        }
+    }
+
+    public boolean hasSubmissionLimit() {
+       return submissionLimit != null;
+    }  
     public Long getId() {
         return id;
     }
@@ -82,6 +142,11 @@ public class Assignment {
     public User getUser() {
         return user;
     }
+
+    public Integer getSubmissionLimit() {
+        return submissionLimit;
+    }
+
     public void setUser(User user) {
         this.user = user;
     }
@@ -97,6 +162,14 @@ public class Assignment {
     }
     public void setAssignmentStatus(AssignmentStatus assignmentStatus) {
         this.assignmentStatus = assignmentStatus;
+    }
+    public void setSubmissionLimit(Integer submissionLimit) {
+        if (submissionLimit != null && submissionLimit < 1) {
+            throw new IllegalArgumentException(
+                "submissionLimit must be positive"
+            );
+        }
+        this.submissionLimit = submissionLimit;
     }
     public void addTest(Test test) {
         tests.add(test);
@@ -122,6 +195,54 @@ public class Assignment {
     
     public List<Submission> getSubmissions() {
         return submissions;
+    }
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public LocalDateTime getOpeningTime() {
+        return openingTime;
+    }
+
+    public void setOpeningTime(LocalDateTime openingTime) {
+        validateTimes(openingTime, this.closingTime);
+        this.openingTime = openingTime;
+    }
+
+    public LocalDateTime getClosingTime() {
+        return closingTime;
+    }
+
+    public void setClosingTime(LocalDateTime closingTime) {
+        validateTimes(this.openingTime, closingTime);
+        this.closingTime = closingTime;
+    }
+
+    public Set<ProgrammingLanguage> getAllowedLanguages() {
+        return Set.copyOf(allowedLanguages);
+    }
+
+    public void setAllowedLanguages(Set<ProgrammingLanguage> languages) {
+        this.allowedLanguages.clear(); 
+        if(languages != null) {
+            this.allowedLanguages.addAll(languages);
+        }
+    }
+
+    public void addAllowedLanguage(ProgrammingLanguage language) {
+        if (language != null) {
+            this.allowedLanguages.add(language);
+        }
+    }
+
+    public void removeAllowedLanguage(ProgrammingLanguage language) {
+        if (language != null) {
+            this.allowedLanguages.remove(language);
+        }
     }
 
 }
