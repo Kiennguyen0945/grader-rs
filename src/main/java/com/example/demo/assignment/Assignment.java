@@ -14,7 +14,12 @@ import java.util.List;
 import java.util.Set;
 
 @Entity
-@Table(name = "assignments")
+@Table(name = "assignments", 
+    uniqueConstraints = @UniqueConstraint(
+        name = "uk_assignment_course_code",
+        columnNames = {"course_id", "code"}
+    )
+)
 public class Assignment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -120,6 +125,15 @@ public class Assignment {
             );
         }
     }
+    public void updateSchedule(
+        LocalDateTime openingTime,
+        LocalDateTime closingTime
+    ) {
+        validateTimes(openingTime, closingTime);
+        this.openingTime = openingTime;
+        this.closingTime = closingTime;
+    }
+
 
     public boolean hasSubmissionLimit() {
        return submissionLimit != null;

@@ -1,6 +1,7 @@
 package com.example.demo.assignment;
 
 import com.example.demo.assignment.Assignment.AssignmentStatus;
+import com.example.demo.assignment.Assignment.ProgrammingLanguage;
 import com.example.demo.course.Course;
 import com.example.demo.course.CourseRepository;
 import com.example.demo.user.User;
@@ -11,7 +12,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class AssignmentService {
@@ -29,7 +32,18 @@ public class AssignmentService {
         this.userRepository = userRepository;
     }
     @Transactional
-    public AssignmentResponseDto createAssignment(Long courseId, Long userId, String code, String title, AssignmentStatus assignmentStatus) {
+    public AssignmentResponseDto createAssignment(
+        Long courseId,
+        Long userId,
+        String code,
+        String title,
+        AssignmentStatus assignmentStatus,
+        String description,
+        Integer submissionLimit,
+        LocalDateTime openingTime,
+        LocalDateTime closingTime,
+        Set<ProgrammingLanguage> allowedLanguages
+    ) {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Course Not Found."));
 
@@ -40,7 +54,18 @@ public class AssignmentService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Assignment with code " + code + " already exists in this course.");
         }
 
-        Assignment assignment = new Assignment(course, user, code, title, assignmentStatus);
+        Assignment assignment = new Assignment(
+            course,
+            user,
+            code,
+            title,
+            assignmentStatus,
+            description,
+            submissionLimit,
+            openingTime,
+            closingTime,
+            allowedLanguages
+        );
         return AssignmentResponseDto.fromEntity(assignmentRepository.save(assignment));
     }
 
@@ -58,14 +83,34 @@ public class AssignmentService {
     }
 
     @Transactional
-    public AssignmentResponseDto partialUpdateAssignment(Long assignmentId, String code, String title, AssignmentStatus assignmentStatus) {
+    public AssignmentResponseDto partialUpdateAssignment(
+            Long assignmentId,
+            String code,
+            String title,
+            AssignmentStatus assignmentStatus,
+            String description,
+            Integer submissionLimit,
+            LocalDateTime openingTime,
+            LocalDateTime closingTime,
+            Set<ProgrammingLanguage> allowedLanguages
+    ) {
         Assignment assignment = assignmentRepository.findById(assignmentId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assignment Not Found."));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Assignment Not Found."
+                ));
 
         if (code != null && !code.equals(assignment.getCode())) {
-            if (assignmentRepository.existsByCourseIdAndCode(assignment.getCourse().getId(), code)) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Assignment with code " + code + " already exists in this course.");
+            if (assignmentRepository.existsByCourseIdAndCode(
+                    assignment.getCourse().getId(), code)) {
+
+                throw new ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        "Assignment with code " + code
+                                + " already exists in this course."
+                );
             }
+
             assignment.setCode(code);
         }
 
@@ -77,7 +122,34 @@ public class AssignmentService {
             assignment.setAssignmentStatus(assignmentStatus);
         }
 
-        return AssignmentResponseDto.fromEntity(assignmentRepository.save(assignment));
+        if (description != null) {
+            assignment.setDescription(description);
+        }
+
+        if (submissionLimit != null) {
+            assignment.setSubmissionLimit(submissionLimit);
+        }
+
+        if (allowedLanguages != null) {
+            assignment.setAllowedLanguages(allowedLanguages);
+        }
+
+        if (openingTime != null || closingTime != null) {
+            LocalDateTime newOpeningTime =
+                    openingTime != null
+                            ? openingTime
+                            : assignment.getOpeningTime();
+
+            LocalDateTime newClosingTime =
+                    closingTime != null
+                            ? closingTime
+                            : assignment.getClosingTime();
+
+            assignment.updateSchedule(newOpeningTime, newClosingTime);
+        }
+        return AssignmentResponseDto.fromEntity(
+                assignmentRepository.save(assignment)
+        );
     }
     @Transactional
     public void deleteAssignment(Long id) {
@@ -88,21 +160,35 @@ public class AssignmentService {
     }
 
     public record AssignmentResponseDto(
-            Long id,
-            Long courseId,
-            Long userId,
-            String code,
-            String title,
-            AssignmentStatus assignmentStatus
+        Long id,
+        Long courseId,
+        Long userId,
+        String code,
+        String title,
+        AssignmentStatus assignmentStatus,
+        String description,
+        Integer submissionLimit,
+        LocalDateTime openingTime,
+        LocalDateTime closingTime,
+        Set<ProgrammingLanguage> allowedLanguages
     ) {
         public static AssignmentResponseDto fromEntity(Assignment assignment) {
+            if (assignment == null) {
+                return null;
+            }
+
             return new AssignmentResponseDto(
                     assignment.getId(),
-                    assignment.getCourse().getId(),
-                    assignment.getUser().getId(),
+                    assignment.getCourse() != null ? assignment.getCourse().getId() : null,
+                    assignment.getUser() != null ? assignment.getUser().getId() : null,
                     assignment.getCode(),
                     assignment.getTitle(),
-                    assignment.getAssignmentStatus()
+                    assignment.getAssignmentStatus(),
+                    assignment.getDescription(),
+                    assignment.getSubmissionLimit(),
+                    assignment.getOpeningTime(),
+                    assignment.getClosingTime(),
+                    assignment.getAllowedLanguages() != null ? Set.copyOf(assignment.getAllowedLanguages()) : Set.of()
             );
         }
     }
