@@ -37,6 +37,7 @@ class Submission {
 + status : String
 + grade : Decimal
 + attempt_number : Int
++ language : String
 }
 
 /' 
@@ -54,12 +55,14 @@ RUNNING
 
 class Assignment {
 + id : Long
++ course_id: Long
++ created_by_user_id : Long
 + code : String
 + title : String
 + opening_time : DateTime
 + closing_time : DateTime
 + submission_limit : Int
-+ programming_language : String
++ allowed_languages : List
 + description : String
 + assignment_status : String
 }
@@ -71,22 +74,48 @@ class Assignment {
 
 class Test {
 + id : Long
++ assignment_id : Long
 + name: String
 + input : Text
 + expected_output : Text
 + is_public : Boolean
++ display_order : Int
++ time_limit_ms : Long
++ memory_limit_kb : Long
 }
 '' result_status: Pass, Failed
 
 class SubmissionTest {
 + id : Long
-+ submission_id : Long
++ grading_run_id : Long
 + test_id : Long
 + status : String
 + actual_output : Text
 + memory_used_kb : Long
 + execution_time_ms : Long
++ grading_run_id : Long
 }
+
+
+class GradingRun {
++ id : Long
++ submission_id : Long
++ triggered_by_user_id : Long
++ reason : Text
++ status : String
++ grade : Decimal
++ created_at : DateTime
++ started_at : DateTime
++ finished_at : DateTime
+}
+
+
+
+/'
+public enum Status {
+        QUEUED, RUNNING, COMPLETED, FAILED
+    }
+'/
 
 ' Layout hints only (no new relationships/content) - keeps User, Course and
 ' CourseUser on the same row so their mutual links stop crossing Assignment's
@@ -103,7 +132,9 @@ Assignment "1" -- "0..*" Submission
 Assignment "1" -- "0..*" Test
 User "1" -- "0..*" Assignment : creates (role=LECTURER)
 User "1" -- "0..*" Submission : creates (role=STUDENT)
+User "1" -- "0..*" GradingRun : creates (role=LECTURER)
 Submission "1" -- "0..*" SubmissionTest
+Submission "1" -- "0..*" GradingRun
 Test "1" -- "0..*" SubmissionTest
 Course "1" -- "0..*" CourseUser
 User "1" -- "0..*" CourseUser
@@ -111,3 +142,7 @@ Course "1" -- "0..*" Assignment
 
 
 @enduml
+
+
+
+
