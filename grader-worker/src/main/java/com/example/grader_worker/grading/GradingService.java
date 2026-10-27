@@ -1,7 +1,6 @@
 package com.example.grader_worker.grading;
 
 
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -17,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.grader_worker.assignment.Assignment;
 import com.example.grader_worker.assignment.AssignmentRepository;
+import com.example.grader_worker.gradingrun.GradingRun;
 import com.example.grader_worker.submission.Submission;
 import com.example.grader_worker.submission.SubmissionRepository;
 import com.example.grader_worker.submissiontest.SubmissionTest;
@@ -39,7 +39,7 @@ public class GradingService {
         this.submissionRepository = submissionRepository;
     }
     @Transactional 
-   public void grade(Submission submission) throws IOException {
+   public void grade(Submission submission, GradingRun gradingRun) throws IOException {
         Assignment assignment = findAssignment(submission);
         validateAssignment(assignment, submission);
         Path tempDir = Files.createTempDirectory("runner-");
@@ -301,6 +301,4 @@ public class GradingService {
         submissionTest.setExecutionTimeMs(durationMs);
         submissionTestRepository.save(submissionTest);
     }
-
- 
 }
