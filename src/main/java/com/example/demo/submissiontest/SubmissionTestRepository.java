@@ -11,12 +11,12 @@ public interface SubmissionTestRepository
         extends JpaRepository<SubmissionTest, Long> {
 
     @Query("""
-        SELECT MAX(st.gradingRunId)
+        SELECT MAX(gr.id)
         FROM SubmissionTest st
-        WHERE st.submission.id = :submissionId
+        JOIN st.gradingRun gr
+        WHERE gr.submission.id = :submissionId
         """)
-    Long findMaxGradingRunIdBySubmissionId(
-            @Param("submissionId") Long submissionId);
+    Long findMaxGradingRunIdBySubmissionId(@Param("submissionId") Long submissionId);
 
     boolean existsBySubmission_IdAndTest_Id(
             Long submissionId,
@@ -28,24 +28,28 @@ public interface SubmissionTestRepository
             Long testId,
             Long gradingRunId);
 
-    @Query("""
+        @Query("""
         SELECT st
         FROM SubmissionTest st
-        JOIN st.test t
-        WHERE st.submission.id = :submissionId
-          AND st.gradingRunId = :gradingRunId
+        JOIN FETCH st.test t
+        JOIN FETCH st.gradingRun gr
+        JOIN FETCH gr.submission sub
+        WHERE sub.id = :submissionId
+                AND gr.id = :gradingRunId
         ORDER BY t.displayOrder ASC
         """)
-    List<SubmissionTest> findBySubmission_IdAndGradingRunId(
+    List<SubmissionTest> findBySubmission_IdAndGradingRun_Id(
             @Param("submissionId") Long submissionId,
             @Param("gradingRunId") Long gradingRunId);
 
     @Query("""
         SELECT st
         FROM SubmissionTest st
-        JOIN st.test t
-        WHERE st.submission.id = :submissionId
-        ORDER BY st.gradingRunId ASC, t.displayOrder ASC
+        JOIN FETCH st.test t
+        JOIN FETCH st.gradingRun gr
+        JOIN FETCH gr.submission sub
+        WHERE sub.id = :submissionId
+        ORDER BY gr.id ASC, t.displayOrder ASC
         """)
     List<SubmissionTest> findBySubmission_Id(
             @Param("submissionId") Long submissionId);

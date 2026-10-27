@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import jakarta.persistence.*;
 import com.example.demo.assignment.Assignment;
 import com.example.demo.courseUser.CourseUser;
+import com.example.demo.gradingrun.GradingRun;
 import com.example.demo.submission.Submission;
 
 import java.util.List;
@@ -20,6 +21,9 @@ public class User {
 
     @OneToMany(mappedBy = "user")
     private List<CourseUser> courseUsers = new ArrayList<>();
+
+    @OneToMany(mappedBy = "triggeredByUser")
+    private List<GradingRun> gradingRuns = new ArrayList<>();
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,6 +42,8 @@ public class User {
 
     @Column(nullable = false)
     private String passwordHash;
+
+    
 
     protected User() {
 
@@ -127,4 +133,14 @@ public class User {
     public void addCourseUser(CourseUser courseUser) {
         courseUsers.add(courseUser);
     }
+
+
+    public List<GradingRun> getGradingRuns() {
+        return gradingRuns;
+    }
+
+    public void setGradingRuns(List<GradingRun> gradingRuns) {
+        this.gradingRuns = gradingRuns;
+    }
+
 }

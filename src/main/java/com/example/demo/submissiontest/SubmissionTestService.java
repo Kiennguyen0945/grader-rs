@@ -15,7 +15,7 @@ public class SubmissionTestService {
     public List<SubmissionTestResponseDto> getSubmissionTestsBySubmissionIdAndGradingId(Long submisisonId, Long gradingId){
         List<SubmissionTest> submissionTests = 
             submissionTestRepository
-            .findBySubmission_IdAndGradingRunId(submisisonId, gradingId);
+            .findBySubmission_IdAndGradingRun_Id(submisisonId, gradingId);
         if (submissionTests.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Submissiontests not found");
         }
@@ -32,23 +32,21 @@ public class SubmissionTestService {
     }
 
     public record SubmissionTestResponseDto(
-        Long submissionId,
+        Long gradingRunId,
         Long testId,
         SubmissionTest.Status status,
         String actualOutput,
         Long memoryUsedKib,
-        Long executionTimeMs,
-        Long gradingRunId
+        Long executionTimeMs
     ) {
         public static SubmissionTestResponseDto fromEntity(SubmissionTest submissionTest) {
             return new SubmissionTestResponseDto(
-                submissionTest.getSubmission().getId(),
+                submissionTest.getGradingRun().getId(),
                 submissionTest.getTest().getId(), 
                 submissionTest.getStatus(), 
                 submissionTest.getActualOutput(), 
                 submissionTest.getMemoryUsedKib(), 
-                submissionTest.getExecutionTimeMs(),
-                submissionTest.getGradingRunId()
+                submissionTest.getExecutionTimeMs()
             );
         }
     }

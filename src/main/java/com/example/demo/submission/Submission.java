@@ -1,8 +1,13 @@
 package com.example.demo.submission;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.example.demo.assignment.Assignment;
+import com.example.demo.gradingrun.GradingRun;
 import com.example.demo.user.User;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -14,6 +19,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity
@@ -51,6 +57,11 @@ public class Submission {
         foreignKey = @ForeignKey(name = "fk_submission_user")
     )
     private User user;
+
+
+    @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL)
+    private List<GradingRun> gradingRuns = new ArrayList<>();
+    
 
     @Column(columnDefinition = "TEXT")
     private String sourceCode;
@@ -131,4 +142,13 @@ public class Submission {
     public void setAttemptNumber(Integer attemptNumber) {
         this.attemptNumber = attemptNumber;
     }
+
+    public List<GradingRun> getGradingRuns() {
+        return gradingRuns;
+    }
+    public void addGradingRun(GradingRun gradingRun) {
+        gradingRuns.add(gradingRun);
+        gradingRun.setSubmission(this);
+    }
+
 }
