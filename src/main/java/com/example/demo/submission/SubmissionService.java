@@ -1,12 +1,13 @@
 package com.example.demo.submission;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.example.demo.assignment.Assignment;
 import com.example.demo.assignment.AssignmentRepository;
+import com.example.demo.gradingrun.GradingRun;
+import com.example.demo.gradingrun.GradingRunRepository;
 import com.example.demo.rabbitmq.SubmissionProducer;
 import com.example.demo.user.User;
 import com.example.demo.user.UserRepository;
@@ -17,20 +18,24 @@ import java.util.List;
 
 @Service 
 public class SubmissionService {
-    @Autowired 
-    private SubmissionProducer producer;
 
+    private final SubmissionProducer producer;
     private final SubmissionRepository submissionRepository;
     private final AssignmentRepository assignmentRepository;
     private final UserRepository userRepository;
+    private final GradingRunRepository gradingRunRepository;
     public SubmissionService(
         SubmissionRepository submissionRepository,
         AssignmentRepository assignmentRepository,
-        UserRepository userRepository
+        UserRepository userRepository,
+        GradingRunRepository gradingRunRepository,
+        SubmissionProducer producer
     ) {
         this.submissionRepository = submissionRepository;
         this.assignmentRepository = assignmentRepository;
         this.userRepository = userRepository;
+        this.gradingRunRepository = gradingRunRepository;
+        this.producer = producer;
     }
     @Transactional
     public SubmissionResponseDto createSubmissionByAssignmentIdAndUserId(
@@ -68,9 +73,10 @@ public class SubmissionService {
             null,
             attemptNumber
         );
-
         Submission savedSubmission = submissionRepository.save(submission);
-        producer.send(String.valueOf(savedSubmission.getId()));
+        GradingRun gradingRun = new GradingRun(savedSubmission, null, null);
+        GradingRun savedGradingRun = gradingRunRepository.save(gradingRun);
+        producer.send(savedSubmission.getId(), savedGradingRun.getId());
         return SubmissionResponseDto.fromEntity(
             savedSubmission
         );
@@ -86,6 +92,8 @@ public class SubmissionService {
         .stream()
         .map(SubmissionResponseDto::fromEntity)
         .toList();
+    }
+    public record SubmissionGradingMessage(Long submissionId, Long gradingRunId) {
     }
     public record SubmissionResponseDto(Long submissionId, 
         Long assignmentId, 

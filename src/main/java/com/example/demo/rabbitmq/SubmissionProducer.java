@@ -3,6 +3,8 @@ package com.example.demo.rabbitmq;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 
+import com.example.demo.submission.SubmissionService.SubmissionGradingMessage;
+
 
 @Component 
 public class SubmissionProducer {
@@ -10,11 +12,12 @@ public class SubmissionProducer {
     public SubmissionProducer(RabbitTemplate rabbitTemplate) {
         this.rabbitTemplate = rabbitTemplate;
     }
-    public void send(String message) {
+    public void send(Long submissionId, Long gradingRunId) {
+        SubmissionGradingMessage message = new SubmissionGradingMessage(submissionId, gradingRunId);
         rabbitTemplate.convertAndSend(
             "submission.exchange",
              "submission.key",
-              message
+            message
         );
     }
 }
