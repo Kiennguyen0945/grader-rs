@@ -1,6 +1,6 @@
 package com.example.grader_worker.submissiontest;
 
-import com.example.grader_worker.submission.Submission;
+import com.example.grader_worker.gradingrun.GradingRun;
 import com.example.grader_worker.test.Test;
 import jakarta.persistence.*;
 
@@ -11,7 +11,7 @@ import jakarta.persistence.*;
     uniqueConstraints = {
         @UniqueConstraint(
             name = "uk_submission_test_run",
-            columnNames = {"submission_id", "test_id", "grading_run_id"}
+            columnNames = {"test_id", "grading_run_id"}
         )
     }
 )
@@ -36,14 +36,6 @@ public class SubmissionTest {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
-        name = "submission_id",
-        nullable = false,
-        foreignKey = @ForeignKey(name = "fk_submission_tests_submission")
-    )
-    private Submission submission;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
         name = "test_id",
         nullable = false,
         foreignKey = @ForeignKey(name = "fk_submission_tests_test")
@@ -63,41 +55,32 @@ public class SubmissionTest {
     @Column(name = "execution_time_ms")
     private Long executionTimeMs;
 
-
-    @Column(name = "grading_run_id", nullable = false)
-    private Long gradingRunId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "grading_run_id", nullable = false, foreignKey =  @ForeignKey(name = "fk_submission_tests_gradingrun"))
+    private GradingRun gradingRun;
 
     protected SubmissionTest() {
     }
 
     public SubmissionTest(
-            Submission submission,
             Test test,
+            GradingRun gradingRun,
             Status status,
             String actualOutput,
             Long memoryUsedKib,
-            Long executionTimeMs, 
-            Long gradingRunId) {
-        this.submission = submission;
+            Long executionTimeMs) {
         this.test = test;
+        this.gradingRun = gradingRun;
         this.status = status;
         this.actualOutput = actualOutput;
         this.memoryUsedKib = memoryUsedKib;
         this.executionTimeMs = executionTimeMs;
-        this.gradingRunId = gradingRunId;
     }
 
     public Long getId() {
         return id;
     }
 
-    public Submission getSubmission() {
-        return submission;
-    }
-
-    public void setSubmission(Submission submission) {
-        this.submission = submission;
-    }
 
     public Test getTest() {
         return test;
@@ -139,11 +122,11 @@ public class SubmissionTest {
         this.executionTimeMs = executionTimeMs;
     }
 
-    public Long getGradingRunId() {
-        return gradingRunId;
-    }
+    public GradingRun getGradingRun() {
+    return gradingRun;
+}
 
-    public void setGradingRunId(Long gradingRunId) {
-        this.gradingRunId = gradingRunId;
+    public void setGradingRun(GradingRun gradingRun) {
+        this.gradingRun = gradingRun;
     }
 }

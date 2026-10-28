@@ -1,6 +1,7 @@
 package com.example.grader_worker.rabbitmq;
 
-import java.io.IOException;
+
+import java.time.LocalDateTime;
 
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
@@ -27,24 +28,25 @@ public class SubmissionConsumer {
     }
     @RabbitListener(queues = "submission.queue")
     public void receiveMessage(SubmissionGradingMessage message) {
-        Submission submission = submissionRepository.findById(message.submissionId())
-        .orElseThrow(
-            () -> new IllegalStateException("Submission not found: " + message.submissionId()));
-        GradingRun gradingRun = gradingRunRepository.findById(message.gradingRunId())
+        GradingRun gradingRun = gradingRunRepository.findByIdWithSubmission(message.gradingRunId())
         .orElseThrow(() -> new IllegalStateException("GradingRun not found: " + message.gradingRunId()));
-        if(!gradingRunRepository.existsByIdAndSubmission_Id(message.gradingRunId(), message.submissionId()))
-        {
-            throw new IllegalStateException("GradingRun does not belong to Submission.");
+        Submission submission = gradingRun.getSubmission();
+        if (!submission.getId().equals(message.submissionId())) {
+            throw new IllegalStateException(
+                "GradingRun does not belong to Submission"
+            );
         }
         try {
             gradingService.grade(submission, gradingRun);
             submissionRepository.save(submission);
             gradingRunRepository.save(gradingRun);
-        } catch (IOException e) {
+        } catch (Exception e) {
             submission.setStatus(Submission.Status.SYSTEM_ERROR);
             gradingRun.setStatus(GradingRun.Status.FAILED);
+            gradingRun.setFinishedAt(LocalDateTime.now());
             submissionRepository.save(submission);
             gradingRunRepository.save(gradingRun);
+            throw new IllegalStateException("Grading failed", e);
         }
             
     }

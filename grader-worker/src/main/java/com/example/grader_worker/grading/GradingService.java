@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -17,13 +18,13 @@ import org.springframework.stereotype.Service;
 import com.example.grader_worker.assignment.Assignment;
 import com.example.grader_worker.assignment.AssignmentRepository;
 import com.example.grader_worker.gradingrun.GradingRun;
+import com.example.grader_worker.gradingrun.GradingRunRepository;
 import com.example.grader_worker.submission.Submission;
 import com.example.grader_worker.submission.SubmissionRepository;
 import com.example.grader_worker.submissiontest.SubmissionTest;
 import com.example.grader_worker.submissiontest.SubmissionTestRepository;
 import com.example.grader_worker.test.Test;
 
-import jakarta.transaction.Transactional;
 
 
 @Service
@@ -33,43 +34,63 @@ public class GradingService {
     private final AssignmentRepository assignmentRepository;
     private final SubmissionTestRepository submissionTestRepository;
     private final SubmissionRepository submissionRepository;
-    public GradingService(AssignmentRepository assignmentRepository, SubmissionTestRepository submissionTestRepository, SubmissionRepository submissionRepository) {
+    private final GradingRunRepository gradingRunRepository;
+    public GradingService(
+            AssignmentRepository assignmentRepository, 
+            SubmissionTestRepository submissionTestRepository, 
+            SubmissionRepository submissionRepository, 
+            GradingRunRepository gradingRunRepository) {
         this.assignmentRepository = assignmentRepository;
         this.submissionTestRepository = submissionTestRepository;
         this.submissionRepository = submissionRepository;
+        this.gradingRunRepository = gradingRunRepository;
     }
-    @Transactional 
    public void grade(Submission submission, GradingRun gradingRun) throws IOException {
+        if (gradingRun.getStatus() != GradingRun.Status.QUEUED) {
+            return;
+        }
         Assignment assignment = findAssignment(submission);
         validateAssignment(assignment, submission);
         Path tempDir = Files.createTempDirectory("runner-");
         try {
             Path mainJava = tempDir.resolve("Main.java");
             Files.writeString(mainJava, submission.getSourceCode());
-            submission.setStatus(Submission.Status.RUNNING);
-            Long gradingRunId = addSubmissionTests(submission, assignment.getTests());
+            setSubmission(submission, Submission.Status.RUNNING, null);
+            setGradingRun(gradingRun, GradingRun.Status.RUNNING, null,  LocalDateTime.now(), null);
+            addSubmissionTests(gradingRun, assignment.getTests());
             ProcessBuilder compileBuilder = new ProcessBuilder("javac", mainJava.toAbsolutePath().toString());
             Process compileProcess = compileBuilder.start();
             try {
                 boolean finished = compileProcess.waitFor(PROCESS_TIMEOUT_SECONDS, TimeUnit.SECONDS);
                 if (!finished) {
                     stopProcess(compileProcess);
-                    setSubmissionStatus(submission, Submission.Status.TIME_LIMIT_EXCEEDED);
-                    submission.setGrade(0.0D);
-                    submissionRepository.save(submission);
-                    markSubmissionTestsAsFailed(submission, gradingRunId);
+                    setSubmission(submission, Submission.Status.TIME_LIMIT_EXCEEDED, 0.0D);
+                    setGradingRun(gradingRun, GradingRun.Status.COMPLETED, 0.0D, null, LocalDateTime.now());
+                    markSubmissionTestsAsFailed(gradingRun);
                     return;
                 }
                 int compileExitCode = compileProcess.exitValue();
                 if (compileExitCode != 0) {
-                    setSubmissionStatus(submission, Submission.Status.COMPILE_ERROR);
-                    submission.setGrade(0.0D);
-                    submissionRepository.save(submission);
-                    markSubmissionTestsAsFailed(submission, gradingRunId);
+                    setSubmission(submission, Submission.Status.COMPILE_ERROR, 0.0D);
+                    setGradingRun(gradingRun, GradingRun.Status.COMPLETED, 0.0D, null, LocalDateTime.now());
+                    markSubmissionTestsAsFailed(gradingRun);
                     return;
                 }
             } catch (InterruptedException e) {
-                submission.setStatus(Submission.Status.SYSTEM_ERROR);
+                setSubmission(
+                    submission,
+                    Submission.Status.SYSTEM_ERROR,
+                    null
+                );
+
+                setGradingRun(
+                    gradingRun,
+                    GradingRun.Status.FAILED,
+                    null,
+                    null,
+                    LocalDateTime.now()
+                );
+
                 Thread.currentThread().interrupt();
                 return;
             }
@@ -92,10 +113,10 @@ public class GradingService {
                 Process runProcess = runBuilder.start();
                 SubmissionTest submissionTest = 
                     submissionTestRepository
-                    .findBySubmission_IdAndTest_IdAndGradingRunId(
-                        submission.getId(), 
+                    .findByGradingRun_Submission_IdAndTest_IdAndGradingRun_Id(
+                        gradingRun.getSubmission().getId(), 
                         test.getId(), 
-                        gradingRunId
+                        gradingRun.getId()
                     ).orElseThrow(() -> new IllegalStateException("SubmissionTest not found.")
                 );
                 try {
@@ -148,15 +169,31 @@ public class GradingService {
                     }
 
                 } catch (InterruptedException e) {
-                    submission.setStatus(Submission.Status.SYSTEM_ERROR);
-                    markSubmissionTestAsFailed(submissionTest, SubmissionTest.Status.SYSTEM_ERROR);
+                   setSubmission(
+                        submission,
+                        Submission.Status.SYSTEM_ERROR,
+                        null
+                    );
+
+                    setGradingRun(
+                        gradingRun,
+                        GradingRun.Status.FAILED,
+                        null,
+                        null,
+                        LocalDateTime.now()
+                    );
+
+                    markSubmissionTestAsFailed(
+                        submissionTest,
+                        SubmissionTest.Status.SYSTEM_ERROR
+                    );
+
                     Thread.currentThread().interrupt();
-                    break;
-                }
+                    return;
             }
-            setSubmissionStatusFromTests(submission, gradingRunId);
-            setSubmissionScore(submission, totalTestCases, passedTestCases);
-           
+            }
+            setSubmissionAndGradingRunScore(gradingRun, totalTestCases, passedTestCases);
+            setSubmissionStatusFromTests(gradingRun);
             
         } finally {
             try (var paths = Files.walk(tempDir)) {
@@ -172,10 +209,42 @@ public class GradingService {
         }
    }
 
+    private void setSubmission(Submission submission, Submission.Status status, Double submissionGrade) {
+        if (submission == null) {
+            return;
+        }
+        if (status != null) {
+            submission.setStatus(status);
+        }
+        if (submissionGrade != null) {
+            submission.setGrade(submissionGrade);
+        }
+        submissionRepository.save(submission);
+    }
+
+    private void setGradingRun(GradingRun gradingRun, GradingRun.Status status, Double gradingRunGrade, LocalDateTime startedAt, LocalDateTime finishedAt) {
+        if (gradingRun == null) {
+            return;
+        }
+        if (status != null) {
+            gradingRun.setStatus(status);
+        }
+        if (gradingRunGrade != null) {
+            gradingRun.setGrade(gradingRunGrade);
+        }
+        if (startedAt != null) {
+            gradingRun.setStartedAt(startedAt);
+        }
+        if (finishedAt != null) {
+            gradingRun.setFinishedAt(finishedAt);
+        }
+        gradingRunRepository.save(gradingRun);
+    }
+
    private Assignment findAssignment(Submission submission) {
         Assignment assignment = 
             assignmentRepository
-            .findById(submission.getAssignment().getId())
+            .findByIdWithTests(submission.getAssignment().getId())
             .orElseThrow(() -> new IllegalStateException("Assignment not found."));
             return assignment;
    }
@@ -192,39 +261,30 @@ public class GradingService {
         p.descendants().forEach(ProcessHandle::destroyForcibly);
         p.destroyForcibly();
     }
-   private void setSubmissionStatus(Submission submission, Submission.Status status) {
-    submission.setStatus(status);
-    submissionRepository.save(submission);
-   }
 
-   private Long addSubmissionTests(
-    Submission submission, 
+
+   private void addSubmissionTests(
+    GradingRun gradingRun, 
     List<Test> tests
     ) {
-    Long maxRunId = submissionTestRepository
-        .findMaxGradingRunIdBySubmissionId(submission.getId());
-    Long nextRunId = maxRunId == null ? 1L : maxRunId + 1L;
     for (Test test : tests) {
         SubmissionTest submissionTest = new SubmissionTest(
-            submission,
             test,
+            gradingRun,
             SubmissionTest.Status.QUEUED,
             null,
             null,
-            null,
-            nextRunId
+            null
         );
         submissionTestRepository.save(submissionTest);
     }
-    return nextRunId;
    }
    private void markSubmissionTestsAsFailed(
-    Submission submission,
-    Long gradingRunId
+    GradingRun gradingRun
     ) {
     List<SubmissionTest> submissionTests = 
             submissionTestRepository
-            .findBySubmission_IdAndGradingRunId(submission.getId(), gradingRunId);
+            .findByGradingRun_Submission_IdAndGradingRun_Id(gradingRun.getSubmission().getId(), gradingRun.getId());
     if(submissionTests.isEmpty()) {
         throw new IllegalStateException("Submission tests not found.");
     }
@@ -264,30 +324,36 @@ public class GradingService {
             default -> null;
         };
     }
-    private void setSubmissionScore(Submission submission, int totalTestCases, int passedTestCases) {
+    private void setSubmissionAndGradingRunScore(GradingRun gradingRun, int totalTestCases, int passedTestCases) {
         if (totalTestCases == 0) {
-            submission.setGrade(0.0D);
+            setSubmission(gradingRun.getSubmission(), null, 0.0D);
             throw new IllegalStateException("Total test cases must be greater than zero.");
         }
         double score = (passedTestCases * 10.0) / totalTestCases;
         double totalScore = Math.round(score * 10) / 10.0;
-        submission.setGrade(totalScore);
-        submissionRepository.save(submission);
+        setSubmission(gradingRun.getSubmission(), null, totalScore);
+        setGradingRun(gradingRun, null, totalScore, null, null);
     }
-    private void setSubmissionStatusFromTests(Submission submission, Long gradingId) {
-        List<SubmissionTest> submissionTests = submissionTestRepository.findBySubmission_IdAndGradingRunId(submission.getId(), gradingId);
+    private void setSubmissionStatusFromTests(GradingRun gradingRun) {
+        List<SubmissionTest> submissionTests = 
+            submissionTestRepository
+            .findByGradingRun_Submission_IdAndGradingRun_Id(
+                gradingRun.getSubmission().getId(),
+                gradingRun.getId()
+            );
         boolean allTestsPassed = true;
         boolean isFirstFailedTest = true;
         for(SubmissionTest submissionTest : submissionTests) {
             if(submissionTest.getStatus() != SubmissionTest.Status.PASSED && isFirstFailedTest) {
                 allTestsPassed = false;
                 isFirstFailedTest = false;
-                submission.setStatus(map(submissionTest.getStatus()));;
+                setSubmission(gradingRun.getSubmission(), map(submissionTest.getStatus()), null);
             }
         }
         if(allTestsPassed) {
-            submission.setStatus(Submission.Status.ACCEPTED);
+            setSubmission(gradingRun.getSubmission(), Submission.Status.ACCEPTED, null);
         }
+        setGradingRun(gradingRun, GradingRun.Status.COMPLETED, null, null, LocalDateTime.now());
     }
     private void updateSubmissionTestResults(
         SubmissionTest submissionTest,
