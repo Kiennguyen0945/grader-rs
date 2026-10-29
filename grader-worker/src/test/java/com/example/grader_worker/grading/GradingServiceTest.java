@@ -16,6 +16,7 @@ import org.mockito.MockitoAnnotations;
 
 import com.example.grader_worker.assignment.Assignment;
 import com.example.grader_worker.assignment.AssignmentRepository;
+import com.example.grader_worker.gradingrun.GradingRun;
 import com.example.grader_worker.submission.Submission;
 import com.example.grader_worker.submission.SubmissionRepository;
 import com.example.grader_worker.submissiontest.SubmissionTest;
@@ -33,10 +34,12 @@ class GradingServiceTest {
     @Mock
     private SubmissionRepository submissionRepository;
 
+
     private GradingService gradingService;
     private Assignment assignment;
     private com.example.grader_worker.test.Test test;
     private SubmissionTest submissionTest;
+    private GradingRun gradingRun;
 
     @BeforeEach
     void setUp() {
@@ -62,13 +65,14 @@ class GradingServiceTest {
         
     }
     void setUp(Submission submission, com.example.grader_worker.test.Test test) {
+        gradingRun = new GradingRun(submission, "test");
         submissionTest = new SubmissionTest(
                     submission,
                     test,
                     SubmissionTest.Status.QUEUED,   
                     null, 
                     null, 
-                    null, 
+                    null,
                     1L
                 );
         submissionTestRepository.save(submissionTest);
@@ -76,9 +80,7 @@ class GradingServiceTest {
         submissionTests.add(submissionTest);
         when(submissionTestRepository
                 .findBySubmission_IdAndTest_IdAndGradingRunId(
-                    submission.getId(), 
-                    test.getId(), 
-                    1L)
+                    submission.getId(), test.getId(), 1L)
             ).thenReturn(Optional.of(submissionTest));
         when(submissionTestRepository
             .findBySubmission_IdAndGradingRunId(submission.getId(), 1L))
@@ -96,7 +98,7 @@ class GradingServiceTest {
             """);
         setUp(submission, test);
         
-        gradingService.grade(submission);
+        gradingService.grade(submission, gradingRun);
         
         assertEquals(Submission.Status.ACCEPTED, submission.getStatus());
         assertEquals(10.0, submission.getGrade());
@@ -112,7 +114,7 @@ class GradingServiceTest {
             }
             """);
         setUp(submission, test);
-        gradingService.grade(submission);
+        gradingService.grade(submission, gradingRun);
         System.out.printf(
             "status=%s, grade=%s, submission=%s%n",
             submission.getStatus(),
@@ -138,7 +140,7 @@ class GradingServiceTest {
             }
             """);
         setUp(submission, test);
-        gradingService.grade(submission);
+        gradingService.grade(submission, gradingRun);
         System.out.printf(
             "status=%s, grade=%s, submission=%s%n",
             submission.getStatus(),
@@ -160,7 +162,7 @@ class GradingServiceTest {
             }
             """);
         setUp(submission, test);
-        gradingService.grade(submission);
+        gradingService.grade(submission, gradingRun);
 
         assertEquals(
             Submission.Status.TIME_LIMIT_EXCEEDED,
@@ -180,7 +182,7 @@ class GradingServiceTest {
             }
             """);
         setUp(submission, test);
-        gradingService.grade(submission);
+        gradingService.grade(submission, gradingRun);
 
         assertEquals(Submission.Status.RUNTIME_ERROR, submission.getStatus());
         assertEquals(0.0, submission.getGrade());
@@ -204,9 +206,10 @@ class GradingServiceTest {
             1
         );
 
+        gradingRun = new GradingRun(submission, "test");
         IllegalStateException exception = assertThrows(
             IllegalStateException.class,
-            () -> gradingService.grade(submission)
+            () -> gradingService.grade(submission, gradingRun)
         );
 
         assertEquals("Assignment has no test cases.", exception.getMessage());

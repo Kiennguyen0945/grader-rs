@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -24,6 +25,7 @@ import org.mockito.stubbing.OngoingStubbing;
 
 import com.example.grader_worker.assignment.Assignment;
 import com.example.grader_worker.assignment.AssignmentRepository;
+import com.example.grader_worker.gradingrun.GradingRun;
 import com.example.grader_worker.submission.Submission;
 import com.example.grader_worker.submission.SubmissionRepository;
 import com.example.grader_worker.submissiontest.SubmissionTest;
@@ -134,6 +136,7 @@ class SubmissionTestTest {
     @Mock
     private SubmissionRepository submissionRepository;
 
+
     private GradingService gradingService;
     private Assignment assignment;
 
@@ -151,12 +154,8 @@ class SubmissionTestTest {
         assignment = new Assignment(
             "A001", "Test assignment", Assignment.AssignmentStatus.PUBLISHED);
 
-        when(assignmentRepository.findById(any()))
+        when(assignmentRepository.findById(nullable(Long.class)))
             .thenReturn(Optional.of(assignment));
-
-        // "no earlier grading run" -> the service will use grading run 1
-        when(submissionTestRepository.findMaxGradingRunIdBySubmissionId(any()))
-            .thenReturn(null);
     }
 
     // ---------- verdict tests: one scenario each ----------
@@ -289,10 +288,11 @@ class SubmissionTestTest {
     void assignmentWithoutTestCases_throwsAndMarksSystemError() {
         // "assignment" from setUp() has no test cases
         Submission submission = newSubmission("public class Main {}");
+        GradingRun run = new GradingRun(submission, "test");
 
         IllegalStateException exception = assertThrows(
             IllegalStateException.class,
-            () -> gradingService.grade(submission));
+            () -> gradingService.grade(submission, run));
 
         assertEquals("Assignment has no test cases.", exception.getMessage());
         assertEquals(Submission.Status.SYSTEM_ERROR, submission.getStatus());
@@ -323,6 +323,7 @@ class SubmissionTestTest {
     private Submission grade(String sourceCode, com.example.grader_worker.test.Test... cases)
             throws IOException {
         Submission submission = newSubmission(sourceCode);
+        GradingRun run = new GradingRun(submission, "test");
 
         rows = new ArrayList<>();
         for (var c : cases) {
@@ -343,7 +344,7 @@ class SubmissionTestTest {
             stubbing = stubbing.thenReturn(Optional.of(rows.get(i)));
         }
 
-        gradingService.grade(submission);
+        gradingService.grade(submission, new GradingRun(submission, "test"));
         return submission;
     }
 
