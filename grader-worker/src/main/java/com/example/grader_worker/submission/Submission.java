@@ -21,7 +21,8 @@ public class Submission {
         MEMORY_LIMIT_EXCEEDED,
         RUNTIME_ERROR,
         SYSTEM_ERROR,
-        NOT_RUN
+        NOT_RUN,
+        OUTPUT_LIMIT_EXCEEDED
     }
 
     @Id

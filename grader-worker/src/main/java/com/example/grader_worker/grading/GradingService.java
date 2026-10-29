@@ -1,17 +1,21 @@
 package com.example.grader_worker.grading;
 
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -25,12 +29,15 @@ import com.example.grader_worker.submissiontest.SubmissionTest;
 import com.example.grader_worker.submissiontest.SubmissionTestRepository;
 import com.example.grader_worker.test.Test;
 
+import jakarta.annotation.PreDestroy;
+
 
 
 @Service
 
 public class GradingService {
     private static final long PROCESS_TIMEOUT_SECONDS = 4;
+    private final ExecutorService executor = Executors.newCachedThreadPool();
     private final AssignmentRepository assignmentRepository;
     private final SubmissionTestRepository submissionTestRepository;
     private final SubmissionRepository submissionRepository;
@@ -59,6 +66,7 @@ public class GradingService {
             setGradingRun(gradingRun, GradingRun.Status.RUNNING, null,  LocalDateTime.now(), null);
             addSubmissionTests(gradingRun, assignment.getTests());
             ProcessBuilder compileBuilder = new ProcessBuilder("javac", mainJava.toAbsolutePath().toString());
+            compileBuilder.redirectErrorStream(true);
             Process compileProcess = compileBuilder.start();
             try {
                 boolean finished = compileProcess.waitFor(PROCESS_TIMEOUT_SECONDS, TimeUnit.SECONDS);
@@ -106,6 +114,7 @@ public class GradingService {
                 tempDir.toAbsolutePath().toString(),
                 "Main"
             );
+            runBuilder.redirectErrorStream(true);
             int passedTestCases = 0;
             int totalTestCases = assignment.getTests().size();
             for(Test test : assignment.getTests()) {
@@ -119,21 +128,26 @@ public class GradingService {
                         gradingRun.getId()
                     ).orElseThrow(() -> new IllegalStateException("SubmissionTest not found.")
                 );
+                
+                
                 try {
                    
+                    Future<String> outputFuture = startOutputReader(runProcess);
                     try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(runProcess.getOutputStream()))) {
                         if (test.getInput() != null) {
                             writer.write(test.getInput());
                         }
                     }
+                    long timeoutMs = test.getTimeLimitMs() != null ? test.getTimeLimitMs() : 4000L;
                     
-                    boolean finished = runProcess.waitFor(test.getTimeLimitMs(), TimeUnit.SECONDS);
+                    boolean finished = runProcess.waitFor(timeoutMs, TimeUnit.MILLISECONDS);
                     long durationMs = TimeUnit.NANOSECONDS.toMillis(
                         System.nanoTime() - start
                     );
                     
                     if (!finished) {
                         stopProcess(runProcess);
+                        outputFuture.cancel(true);
                         updateSubmissionTestResults(
                             submissionTest,
                             SubmissionTest.Status.TIME_LIMIT_EXCEEDED,
@@ -144,7 +158,20 @@ public class GradingService {
                         Files.deleteIfExists(memoryFile);
                         continue;
                     }
-                    
+                    String stdout;
+                    try {
+                        stdout = getOutput(outputFuture);
+                    } catch (OutputLimitExceededException e) {
+                        updateSubmissionTestResults(
+                            submissionTest,
+                            SubmissionTest.Status.OUTPUT_LIMIT_EXCEEDED,
+                            null,
+                            null,
+                            durationMs
+                        );
+
+                        continue;
+                    }
                     int runExitCode = runProcess.exitValue();
                     if(runExitCode != 0) {
                         markSubmissionTestAsFailed(submissionTest, SubmissionTest.Status.RUNTIME_ERROR);
@@ -172,8 +199,7 @@ public class GradingService {
                         );
                         continue;
                     }
-
-                    String stdout = readActualOutput(runProcess); 
+                    
                     boolean passed = stdout.trim().equals(test.getExpectedOutput().trim());
 
                     if(passed) {
@@ -226,6 +252,10 @@ public class GradingService {
             }
         }
    }
+   @PreDestroy
+    public void shutdownExecutor() {
+        executor.shutdownNow();
+    }
 
     private void setSubmission(Submission submission, Submission.Status status, Double submissionGrade) {
         if (submission == null) {
@@ -312,15 +342,55 @@ public class GradingService {
     submissionTestRepository.saveAll(submissionTests);
    }
 
-   private String readActualOutput(Process process) throws IOException {
+   private static class OutputLimitExceededException
+        extends RuntimeException {
+}
 
+   private Future<String> startOutputReader(Process process) {
+        return executor.submit(() -> {
+            final long maxOutputCharacters = 1_000_000;
+            StringBuilder output = new StringBuilder();
+            char[] buffer = new char[4096];
+            long totalCharacters = 0;
 
-    String stdout;
-    try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-        stdout = reader.lines().collect(Collectors.joining(System.lineSeparator()));
-        return stdout;
+            try (Reader reader = new InputStreamReader(
+                    process.getInputStream(),
+                    StandardCharsets.UTF_8)) {
+
+                int count;
+
+                while ((count = reader.read(buffer)) != -1) {
+                    totalCharacters += count;
+
+                    if (totalCharacters > maxOutputCharacters) {
+                        stopProcess(process);
+                        throw new OutputLimitExceededException();
+                    }
+
+                    output.append(buffer, 0, count);
+                }
+            }
+
+            return output.toString();
+        });
     }
-   }
+
+    private String getOutput(Future<String> outputFuture)
+        throws IOException {
+        try {
+            return outputFuture.get();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IOException("Output reading interrupted", e);
+
+        } catch (ExecutionException e) {
+            if (e.getCause() instanceof OutputLimitExceededException) {
+                throw (OutputLimitExceededException) e.getCause();
+            }
+
+            throw new IOException("Output reading failed", e.getCause());
+        }
+    }
 
    private void markSubmissionTestAsFailed(
         SubmissionTest submissionTest,
@@ -341,6 +411,7 @@ public class GradingService {
             case QUEUED -> Submission.Status.QUEUED;
             case RUNNING -> Submission.Status.RUNNING;
             case NOT_RUN -> Submission.Status.NOT_RUN;
+            case OUTPUT_LIMIT_EXCEEDED -> Submission.Status.OUTPUT_LIMIT_EXCEEDED;
             default -> null;
         };
     }
