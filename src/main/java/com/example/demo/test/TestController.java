@@ -24,10 +24,10 @@ public class TestController {
 
     @PostMapping("/{assignmentId}/tests")
     public TestService.TestResponseDto createTestByAssignmentId(@PathVariable Long assignmentId, @RequestBody CreateTestRequest request) {
-        return testService.createTestByAssignmentId(assignmentId, request.name(), request.input(), request.expectedOutput(), request.isPublic());
+        return testService.createTestByAssignmentId(assignmentId, request.name(), request.input(), request.expectedOutput(), request.isPublic(), request.timeLimitMs(),request.memoryLimitKib());
     }
 
-    public record CreateTestRequest(String name, String input, String expectedOutput, boolean isPublic) {
+    public record CreateTestRequest(String name, String input, String expectedOutput, boolean isPublic, Long timeLimitMs, Long memoryLimitKib) {
     }
 
 

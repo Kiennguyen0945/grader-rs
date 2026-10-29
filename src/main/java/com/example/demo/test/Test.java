@@ -33,16 +33,24 @@ public class Test {
     @Column(nullable = false)
     private int displayOrder;
 
+    @Column(nullable = false)
+    private Long timeLimitMs;
+    
+    @Column(nullable = false)
+    private Long memoryLimitKib;
+
     // Constructors
     public Test() {}
 
-    public Test(Assignment assignment, String name, String input, String expectedOutput, boolean isPublic, int displayOrder) {
+    public Test(Assignment assignment, String name, String input, String expectedOutput, boolean isPublic, int displayOrder, Long timeLimitMs, Long memoryLimitKiB) {
         this.assignment = assignment;
         this.name = name;
         this.input = input;
         this.expectedOutput = expectedOutput;
         this.isPublic = isPublic;
         this.displayOrder = displayOrder;
+        this.timeLimitMs = timeLimitMs == null ? 4 : timeLimitMs;
+        this.memoryLimitKib = memoryLimitKiB == null ? 256L * 1024 : memoryLimitKiB;
     }
 
     // Getters & Setters
@@ -100,5 +108,21 @@ public class Test {
 
     public void setDisplayOrder(int displayOrder) {
         this.displayOrder = displayOrder;
+    }
+
+    public Long getTimeLimitMs() {
+        return timeLimitMs;
+    }
+
+    public void setTimeLimitMs(Long timeLimitMs) {
+        this.timeLimitMs = timeLimitMs;
+    }
+
+    public Long getMemoryLimitKib() {
+        return memoryLimitKib;
+    }
+    
+     public void setMemoryLimitKib(Long memoryLimitKib) {
+        this.memoryLimitKib = memoryLimitKib;
     }
 }

@@ -23,10 +23,10 @@ public class TestService {
     }
 
   
-    public TestResponseDto createTestByAssignmentId(Long assignmentId, String name, String input, String expectedOutput, boolean isPublic) {
+    public TestResponseDto createTestByAssignmentId(Long assignmentId, String name, String input, String expectedOutput, boolean isPublic, Long timeLimitMs, Long memoryLimitKib) {
         Assignment assignment = assignmentRepository.findById(assignmentId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assignment Not Found."));
         int displayOrder = testRepository.countByAssignmentId(assignmentId);
-        Test test = new Test(assignment, name, input, expectedOutput, isPublic, displayOrder + 1);
+        Test test = new Test(assignment, name, input, expectedOutput, isPublic, displayOrder + 1, timeLimitMs, memoryLimitKib);
         return TestResponseDto.fromEntity(testRepository.save(test));
     }
 
