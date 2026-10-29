@@ -127,14 +127,20 @@ public class GradingService {
                         }
                     }
                     
-                    boolean finished = runProcess.waitFor(PROCESS_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                    boolean finished = runProcess.waitFor(test.getTimeLimitMs(), TimeUnit.SECONDS);
                     long durationMs = TimeUnit.NANOSECONDS.toMillis(
                         System.nanoTime() - start
                     );
                     
                     if (!finished) {
                         stopProcess(runProcess);
-                        markSubmissionTestAsFailed(submissionTest, SubmissionTest.Status.TIME_LIMIT_EXCEEDED);
+                        updateSubmissionTestResults(
+                            submissionTest,
+                            SubmissionTest.Status.TIME_LIMIT_EXCEEDED,
+                            null,
+                            null,
+                            durationMs
+                        );
                         Files.deleteIfExists(memoryFile);
                         continue;
                     }
@@ -152,6 +158,18 @@ public class GradingService {
                         Files.deleteIfExists(memoryFile);
                     } catch (IOException | NumberFormatException e) {
                         updateSubmissionTestResults(submissionTest, SubmissionTest.Status.SYSTEM_ERROR, null, null, null);
+                        continue;
+                    }
+
+                    if (test.getMemoryLimitKib() != null
+                            && peakMemoryKiB >= test.getMemoryLimitKib()) {
+                        updateSubmissionTestResults(
+                            submissionTest,
+                            SubmissionTest.Status.MEMORY_LIMIT_EXCEEDED,
+                            null,
+                            peakMemoryKiB,
+                            durationMs
+                        );
                         continue;
                     }
 
@@ -295,6 +313,8 @@ public class GradingService {
    }
 
    private String readActualOutput(Process process) throws IOException {
+
+
     String stdout;
     try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
         stdout = reader.lines().collect(Collectors.joining(System.lineSeparator()));
