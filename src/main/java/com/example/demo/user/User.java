@@ -105,6 +105,10 @@ public class User {
         this.passwordHash = passwordHash;
     }
 
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
 
     public void addAssignment(Assignment assignment) {
         assignments.add(assignment);
