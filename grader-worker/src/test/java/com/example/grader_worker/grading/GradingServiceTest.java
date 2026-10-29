@@ -17,6 +17,7 @@ import org.mockito.MockitoAnnotations;
 import com.example.grader_worker.assignment.Assignment;
 import com.example.grader_worker.assignment.AssignmentRepository;
 import com.example.grader_worker.gradingrun.GradingRun;
+import com.example.grader_worker.gradingrun.GradingRunRepository;
 import com.example.grader_worker.submission.Submission;
 import com.example.grader_worker.submission.SubmissionRepository;
 import com.example.grader_worker.submissiontest.SubmissionTest;
@@ -34,6 +35,9 @@ class GradingServiceTest {
     @Mock
     private SubmissionRepository submissionRepository;
 
+    @Mock
+    private GradingRunRepository gradingRunRepository;
+
 
     private GradingService gradingService;
     private Assignment assignment;
@@ -44,7 +48,12 @@ class GradingServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        gradingService = new GradingService(assignmentRepository, submissionTestRepository, submissionRepository);
+        gradingService = new GradingService(
+            assignmentRepository,
+            submissionTestRepository,
+            submissionRepository,
+            gradingRunRepository
+        );
 
         assignment = new Assignment(
             "A001",
@@ -52,38 +61,33 @@ class GradingServiceTest {
             Assignment.AssignmentStatus.PUBLISHED
         );
 
-        
-
         test = new com.example.grader_worker.test.Test(
-            assignment, "Hello World", "", "Hello World", true, 1
+            assignment, "Hello World", "", "Hello World", true, 1, 4000L, 256L * 1024
         );
         assignment.addTest(test);
         
-        when(assignmentRepository.findById(null))
+        when(assignmentRepository.findByIdWithTests(null))
             .thenReturn(Optional.of(assignment));
-        
-        
     }
     void setUp(Submission submission, com.example.grader_worker.test.Test test) {
         gradingRun = new GradingRun(submission, "test");
         submissionTest = new SubmissionTest(
-                    submission,
                     test,
+                    gradingRun,
                     SubmissionTest.Status.QUEUED,   
                     null, 
                     null, 
-                    null,
-                    1L
+                    null
                 );
         submissionTestRepository.save(submissionTest);
         List<SubmissionTest> submissionTests = new ArrayList<>();
         submissionTests.add(submissionTest);
         when(submissionTestRepository
-                .findBySubmission_IdAndTest_IdAndGradingRunId(
-                    submission.getId(), test.getId(), 1L)
+                .findByGradingRun_Submission_IdAndTest_IdAndGradingRun_Id(
+                    submission.getId(), test.getId(), gradingRun.getId())
             ).thenReturn(Optional.of(submissionTest));
         when(submissionTestRepository
-            .findBySubmission_IdAndGradingRunId(submission.getId(), 1L))
+            .findByGradingRun_Submission_IdAndGradingRun_Id(submission.getId(), gradingRun.getId()))
             .thenReturn(submissionTests);
     }
 
@@ -195,7 +199,7 @@ class GradingServiceTest {
             "Empty assignment",
             Assignment.AssignmentStatus.PUBLISHED
         );
-        when(assignmentRepository.findById(null))
+        when(assignmentRepository.findByIdWithTests(null))
             .thenReturn(Optional.of(assignmentWithoutTests));
 
         Submission submission = new Submission(

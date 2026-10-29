@@ -26,6 +26,7 @@ import org.mockito.stubbing.OngoingStubbing;
 import com.example.grader_worker.assignment.Assignment;
 import com.example.grader_worker.assignment.AssignmentRepository;
 import com.example.grader_worker.gradingrun.GradingRun;
+import com.example.grader_worker.gradingrun.GradingRunRepository;
 import com.example.grader_worker.submission.Submission;
 import com.example.grader_worker.submission.SubmissionRepository;
 import com.example.grader_worker.submissiontest.SubmissionTest;
@@ -125,6 +126,30 @@ class SubmissionTestTest {
         }
         """;
 
+    // prints an excessive amount of text to trigger output limit exceeded (> 1,000,000 chars)
+    private static final String OUTPUT_OVERFLOW = """
+        public class Main {
+            public static void main(String[] args) {
+                while (true) {
+                    System.out.println("01234567890123456789012345678901234567890123456789");
+                }
+            }
+        }
+        """;
+
+    // allocates a substantial array in memory
+    private static final String MEMORY_HEAVY = """
+        public class Main {
+            public static void main(String[] args) {
+                byte[][] buffer = new byte[1024][];
+                for (int i = 0; i < 1024; i++) {
+                    buffer[i] = new byte[1024 * 50]; // ~50 MB total
+                }
+                System.out.println("Done");
+            }
+        }
+        """;
+
     // ---------- test setup ----------
 
     @Mock
@@ -135,6 +160,9 @@ class SubmissionTestTest {
 
     @Mock
     private SubmissionRepository submissionRepository;
+
+    @Mock
+    private GradingRunRepository gradingRunRepository;
 
 
     private GradingService gradingService;
@@ -148,13 +176,17 @@ class SubmissionTestTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         gradingService = new GradingService(
-            assignmentRepository, submissionTestRepository, submissionRepository);
+            assignmentRepository,
+            submissionTestRepository,
+            submissionRepository,
+            gradingRunRepository
+        );
 
         // an assignment with NO test cases yet; each test adds the ones it needs
         assignment = new Assignment(
             "A001", "Test assignment", Assignment.AssignmentStatus.PUBLISHED);
 
-        when(assignmentRepository.findById(nullable(Long.class)))
+        when(assignmentRepository.findByIdWithTests(nullable(Long.class)))
             .thenReturn(Optional.of(assignment));
     }
 
@@ -213,6 +245,29 @@ class SubmissionTestTest {
         assertEquals(Submission.Status.RUNTIME_ERROR, submission.getStatus());
         assertEquals(0.0, submission.getGrade());
         assertRowStatuses(SubmissionTest.Status.RUNTIME_ERROR);
+    }
+
+    @Test
+    void memoryLimitExceeded_isMemoryLimitExceeded() throws IOException {
+        // Any JVM process consumes at least a few MBs, so a low limit (e.g. 1024 KiB = 1MB) triggers MLE
+        var t1 = testCaseWithLimits("", "Done", 4000L, 1024L);
+
+        Submission submission = grade(MEMORY_HEAVY, t1);
+
+        assertEquals(Submission.Status.MEMORY_LIMIT_EXCEEDED, submission.getStatus());
+        assertEquals(0.0, submission.getGrade());
+        assertRowStatuses(SubmissionTest.Status.MEMORY_LIMIT_EXCEEDED);
+    }
+
+    @Test
+    void outputLimitExceeded_isOutputLimitExceeded() throws IOException {
+        var t1 = testCase("", "expected output");
+
+        Submission submission = grade(OUTPUT_OVERFLOW, t1);
+
+        assertEquals(Submission.Status.OUTPUT_LIMIT_EXCEEDED, submission.getStatus());
+        assertEquals(0.0, submission.getGrade());
+        assertRowStatuses(SubmissionTest.Status.OUTPUT_LIMIT_EXCEEDED);
     }
 
     // ---------- output comparison rules ----------
@@ -300,11 +355,17 @@ class SubmissionTestTest {
 
     // ---------- helpers (keep the tests above short and readable) ----------
 
-    /** Creates a test case and adds it to the assignment. */
+    /** Creates a test case and adds it to the assignment with standard limits (4s, 256MB). */
     private com.example.grader_worker.test.Test testCase(String input, String expectedOutput) {
+        return testCaseWithLimits(input, expectedOutput, 4000L, 256L * 1024);
+    }
+
+    /** Creates a test case with specific time and memory limits. */
+    private com.example.grader_worker.test.Test testCaseWithLimits(
+            String input, String expectedOutput, Long timeLimitMs, Long memoryLimitKib) {
         int order = assignment.getTests().size() + 1;
         var test = new com.example.grader_worker.test.Test(
-            assignment, "case " + order, input, expectedOutput, true, order);
+            assignment, "case " + order, input, expectedOutput, true, order, timeLimitMs, memoryLimitKib);
         assignment.addTest(test);
         return test;
     }
@@ -328,23 +389,25 @@ class SubmissionTestTest {
         rows = new ArrayList<>();
         for (var c : cases) {
             rows.add(new SubmissionTest(
-                submission, c, SubmissionTest.Status.QUEUED, null, null, null, 1L));
+                c, run, SubmissionTest.Status.QUEUED, null, null, null));
         }
 
         // used when the service looks up ALL rows of this run
-        when(submissionTestRepository.findBySubmission_IdAndGradingRunId(any(), eq(1L)))
+        when(submissionTestRepository.findByGradingRun_Submission_IdAndGradingRun_Id(any(), any()))
             .thenReturn(rows);
 
         // used inside the loop: 1st call -> row 1, 2nd call -> row 2, ...
-        OngoingStubbing<Optional<SubmissionTest>> stubbing = when(
-            submissionTestRepository.findBySubmission_IdAndTest_IdAndGradingRunId(
-                any(), any(), eq(1L)))
-            .thenReturn(Optional.of(rows.get(0)));
-        for (int i = 1; i < rows.size(); i++) {
-            stubbing = stubbing.thenReturn(Optional.of(rows.get(i)));
+        if (!rows.isEmpty()) {
+            OngoingStubbing<Optional<SubmissionTest>> stubbing = when(
+                submissionTestRepository.findByGradingRun_Submission_IdAndTest_IdAndGradingRun_Id(
+                    any(), any(), any()))
+                .thenReturn(Optional.of(rows.get(0)));
+            for (int i = 1; i < rows.size(); i++) {
+                stubbing = stubbing.thenReturn(Optional.of(rows.get(i)));
+            }
         }
 
-        gradingService.grade(submission, new GradingRun(submission, "test"));
+        gradingService.grade(submission, run);
         return submission;
     }
 
