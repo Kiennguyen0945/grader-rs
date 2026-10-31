@@ -43,18 +43,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String token = header.substring(7);
-        String username;
+        String userId;
 
         try {
-            username = jwtService.extractUserId(token);
+            userId = jwtService.extractUserId(token);
         } catch (Exception exception) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        if (SecurityContextHolder.getContext().getAuthentication() == null) {
-            CustomUserPrincipal user =
-                  (CustomUserPrincipal) userDetailsService.loadUserByUsername(username);
+        if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            CustomUserPrincipal user = userDetailsService.loadUserById(userId);
 
             if (jwtService.isValid(token, user)) {
                 UsernamePasswordAuthenticationToken authentication =

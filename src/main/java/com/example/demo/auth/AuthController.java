@@ -21,7 +21,6 @@ public class AuthController {
 
     @PostMapping("/login")
     public LoginResponse login(@RequestBody LoginRequest request) {
-        System.out.print("/LOGIC ENDPOINT REACHED");
         Authentication authentication =
                 authenticationManager.authenticate(
                         new UsernamePasswordAuthenticationToken(
@@ -32,7 +31,6 @@ public class AuthController {
         
         CustomUserPrincipal user = (CustomUserPrincipal) authentication.getPrincipal();
         String accessToken = jwtService.generateAccessToken(user);
-        // Generate the JWT after authentication succeeds.
         
         return new LoginResponse(accessToken);
     }
