@@ -18,12 +18,12 @@ public interface SubmissionTestRepository
         """)
     Long findMaxGradingRunIdBySubmissionId(@Param("submissionId") Long submissionId);
 
-    boolean existsBySubmission_IdAndTest_Id(
+    boolean existsByGradingRun_Submission_IdAndTest_Id(
             Long submissionId,
             Long testId);
 
     Optional<SubmissionTest>
-    findBySubmission_IdAndTest_IdAndGradingRunId(
+    findByGradingRun_Submission_IdAndTest_IdAndGradingRunId(
             Long submissionId,
             Long testId,
             Long gradingRunId);
@@ -38,7 +38,7 @@ public interface SubmissionTestRepository
                 AND gr.id = :gradingRunId
         ORDER BY t.displayOrder ASC
         """)
-    List<SubmissionTest> findBySubmission_IdAndGradingRun_Id(
+    List<SubmissionTest> findByGradingRun_Submission_IdAndGradingRun_Id(
             @Param("submissionId") Long submissionId,
             @Param("gradingRunId") Long gradingRunId);
 

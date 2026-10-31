@@ -20,6 +20,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public LoginResponse login(@RequestBody LoginRequest request) {
+        System.out.println("LOGIN CONTROLLER REACHED");
         Authentication authentication =
                 authenticationManager.authenticate(
                         new UsernamePasswordAuthenticationToken(
@@ -27,7 +28,7 @@ public class AuthController {
                                 request.password()
                         )
                 );
-
+        
         UserDetails user = (UserDetails) authentication.getPrincipal();
         String accessToken = jwtService.generateAccessToken(user);
         // Generate the JWT after authentication succeeds.

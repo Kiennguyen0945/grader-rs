@@ -6,16 +6,22 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.example.demo.gradingrun.GradingRun;
+import com.example.demo.gradingrun.GradingRunRepository;
+
 @Service 
 public class SubmissionTestService {
     private final SubmissionTestRepository submissionTestRepository;
-    public SubmissionTestService(SubmissionTestRepository submissionTestRepository) {
+    private final GradingRunRepository gradingRunRepository;
+    public SubmissionTestService(SubmissionTestRepository submissionTestRepository, GradingRunRepository gradingRunRepository) {
         this.submissionTestRepository = submissionTestRepository;
+        this.gradingRunRepository = gradingRunRepository;
     }
     public List<SubmissionTestResponseDto> getSubmissionTestsBySubmissionIdAndGradingId(Long submisisonId, Long gradingId){
+        GradingRun gradingRun = gradingRunRepository.findByIdWithSubmission(gradingId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "GradingRun not found."));
         List<SubmissionTest> submissionTests = 
             submissionTestRepository
-            .findBySubmission_IdAndGradingRun_Id(submisisonId, gradingId);
+            .findByGradingRun_Submission_IdAndGradingRun_Id(gradingRun.getSubmission().getId(), gradingId);
         if (submissionTests.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Submissiontests not found");
         }
