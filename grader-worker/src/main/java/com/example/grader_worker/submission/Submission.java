@@ -1,7 +1,7 @@
 package com.example.grader_worker.submission;
 
 import com.example.grader_worker.assignment.Assignment;
-import com.example.grader_worker.submissiontest.SubmissionTest;
+import com.example.grader_worker.gradingrun.GradingRun;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;
@@ -37,9 +37,8 @@ public class Submission {
     )
     private Assignment assignment;
 
-    @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<SubmissionTest> submissionTests = new ArrayList<>();
-
+    @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL)
+    private List<GradingRun> gradingRuns = new ArrayList<>();
 
     @Column(columnDefinition = "TEXT")
     private String sourceCode;

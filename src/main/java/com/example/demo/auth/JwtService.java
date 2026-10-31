@@ -1,13 +1,12 @@
 package com.example.demo.auth;
 
 import java.nio.charset.StandardCharsets;
-import java.security.KeyStore.SecretKeyEntry;
 import java.util.Date;
 
 import javax.crypto.SecretKey;
 
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
+import com.example.demo.user.CustomUserPrincipal;
 import org.springframework.stereotype.Service;
 
 import io.jsonwebtoken.Jwts;
@@ -17,9 +16,9 @@ import io.jsonwebtoken.security.Keys;
 public class JwtService {
     private final SecretKey key = Keys.hmacShaKeyFor("change-this-to-a-long-secret-key-at-least-32-bytes"
     .getBytes(StandardCharsets.UTF_8));
-    public String generateAccessToken(UserDetails user) {
+    public String generateAccessToken(CustomUserPrincipal user) {
         return  Jwts.builder()
-        .subject(user.getUsername())
+        .subject(user.getId().toString())
         .claim("roles", user.getAuthorities()
         .stream()
         .map(GrantedAuthority::getAuthority)
@@ -30,7 +29,8 @@ public class JwtService {
         .compact();
     }
 
-    public String extractUsername(String token) {
+    public String extractUserId(String token) {
+        System.out.println("EXTRACT USER ID");
         return Jwts.parser()
         .verifyWith(key)
         .build()
@@ -39,7 +39,7 @@ public class JwtService {
         .getSubject();
     }
 
-    public boolean isValid(String token, UserDetails user) { 
-        return extractUsername(token).equals(user.getUsername());
+    public boolean isValid(String token, CustomUserPrincipal user) { 
+        return extractUserId(token).equals(user.getId().toString());
     }
 }

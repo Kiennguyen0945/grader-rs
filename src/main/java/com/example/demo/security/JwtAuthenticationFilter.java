@@ -4,12 +4,12 @@ import java.io.IOException;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.example.demo.auth.JwtService;
 import com.example.demo.user.CustomUserDetailsService;
+import com.example.demo.user.CustomUserPrincipal;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -34,17 +34,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain)
             throws ServletException, IOException {
-        
-        System.out.println(
-        "JWT FILTER: " + request.getMethod() + " " + request.getRequestURI()
-        );
-        System.out.println(
-                "AUTH HEADER: " + request.getHeader("Authorization")
-        );
-        
         String header = request.getHeader("Authorization");
 
         if (header == null || !header.startsWith("Bearer ")) {
+            System.out.println("RESPONSE WITHOUT BEARER");
             filterChain.doFilter(request, response);
             return;
         }
@@ -53,15 +46,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String username;
 
         try {
-            username = jwtService.extractUsername(token);
+            username = jwtService.extractUserId(token);
         } catch (Exception exception) {
             filterChain.doFilter(request, response);
             return;
         }
 
         if (SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails user =
-                    userDetailsService.loadUserByUsername(username);
+            CustomUserPrincipal user =
+                  (CustomUserPrincipal) userDetailsService.loadUserByUsername(username);
 
             if (jwtService.isValid(token, user)) {
                 UsernamePasswordAuthenticationToken authentication =

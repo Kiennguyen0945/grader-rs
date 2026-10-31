@@ -61,15 +61,47 @@ Actor: Lecturer
 ## Endpoints
 
 POST   /api/courses
+lecturer only
 GET    /api/courses
+authenticated users
 GET    /api/courses/{id}
+authenticated users
 PATCH  /api/courses/{id}
+lecturer + own course
 DELETE /api/courses/{id}
+lecturer owns it or student
 GET    /api/courses?code=CS505
 
 ## Parked
-authenticated lecturer
-autogeneration courses's code
 
 
+
+POST   /api/courses
+```json
+{
+   "name": "code",
+   "course_name": "Basic Programming",
+   "description" : ""
+}
+```
+
+GET    /api/courses
+
+```json
+{
+    
+}
+```
+
+Can only see their own course
+lecturer
+- view
+- edit
+- delete
+- create
+
+
+student
+Can only see their own courses
+- view
 

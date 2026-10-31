@@ -159,3 +159,16 @@ The server determines those values.
 - Detailed `SubmissionTest` results
 - Regrading
 - Editing or deleting submissions
+
+
+## Authenticate
+
+Lecturer:
+- Create
+- Delete
+- Update
+- View
+
+
+
+

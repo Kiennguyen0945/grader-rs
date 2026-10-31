@@ -3,8 +3,9 @@ package com.example.demo.auth;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+
+import com.example.demo.user.CustomUserPrincipal;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -20,7 +21,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public LoginResponse login(@RequestBody LoginRequest request) {
-        System.out.println("LOGIN CONTROLLER REACHED");
+        System.out.print("/LOGIC ENDPOINT REACHED");
         Authentication authentication =
                 authenticationManager.authenticate(
                         new UsernamePasswordAuthenticationToken(
@@ -29,7 +30,7 @@ public class AuthController {
                         )
                 );
         
-        UserDetails user = (UserDetails) authentication.getPrincipal();
+        CustomUserPrincipal user = (CustomUserPrincipal) authentication.getPrincipal();
         String accessToken = jwtService.generateAccessToken(user);
         // Generate the JWT after authentication succeeds.
         
