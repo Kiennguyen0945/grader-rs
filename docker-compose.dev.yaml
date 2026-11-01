@@ -66,6 +66,15 @@ services:
     volumes:
       - ./grader-worker:/app
 
+  grader-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - grader-backend
+
 volumes:
   grader-postgres-data:
   grader-pgadmin-data:
