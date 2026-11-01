@@ -3,7 +3,11 @@ package com.example.demo.assignment;
 import java.time.LocalDateTime;
 import java.util.Set;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import com.example.demo.user.CustomUserPrincipal;
+import com.example.demo.user.User;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
@@ -19,11 +23,15 @@ public class AssignmentResourceController {
     }
 
     @GetMapping("/{assignmentId}")
-    public AssignmentService.AssignmentResponseDto fetchSingleAssignment(
-            @PathVariable Long assignmentId) {
-
-        return assignmentService.fetchSingleAssignment(assignmentId);
+    public AssignmentService.AssignmentDetailResponseDto fetchSingleAssignment(
+            @PathVariable Long assignmentId,
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        boolean isLecturer = principal != null && principal.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_" + User.Role.LECTURER.name()));
+        Long userId = principal != null ? principal.getId() : null;
+        return assignmentService.fetchAssignmentWorkspaceDetail(assignmentId, userId, isLecturer);
     }
+
 
     @PatchMapping("/{assignmentId}")
     public AssignmentService.AssignmentResponseDto partialUpdateAssignment(

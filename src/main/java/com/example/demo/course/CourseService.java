@@ -65,6 +65,14 @@ public class CourseService {
     public List<Course> getAllCourses() {
         return courseRepository.findAll();
     }
+
+    public List<Course> getCoursesForUser(Long userId, boolean isLecturer) {
+        if (isLecturer) {
+            return courseRepository.findAll();
+        }
+        return courseRepository.findEnrolledCoursesByUserId(userId);
+    }
+
     public Course getCourseById(Long id) {
         Course course = courseRepository.findById(id).orElseThrow(() 
         -> new ResponseStatusException(HttpStatus.NOT_FOUND));

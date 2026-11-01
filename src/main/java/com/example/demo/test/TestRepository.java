@@ -5,5 +5,7 @@ import java.util.List;
 
 public interface TestRepository extends JpaRepository<Test, Long> {
     List<Test> findByAssignmentId(Long assignmentId); 
+    List<Test> findByAssignmentIdAndIsPublicTrueOrderByDisplayOrderAsc(Long assignmentId);
     int countByAssignmentId(Long assignmentId);
 }
+

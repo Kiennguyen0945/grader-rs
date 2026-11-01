@@ -39,17 +39,17 @@ public class AssignmentControllerTest {
                 userId,
                 "B001",
                 "Print skibidi", 
-                Assignment.AssignmentStatus.DRAFT,
+                Assignment.AssignmentStatus.PUBLISHED,
                 null,
                 null,
                 null,
                 null,
                 null
             );
-        when(assignmentService.getAssignmentsByCourseIdAndUserId(courseId, userId)).thenReturn(List.of(assignmentResponseDto));
+        when(assignmentService.getAssignmentsForCourse(eq(courseId), any(), any(Boolean.class)))
+                .thenReturn(List.of(assignmentResponseDto));
         mockMvc.perform(
         get("/api/courses/{courseId}/assignments", courseId)
-            .param("userId", userId.toString())
         )
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].code").value("B001"));

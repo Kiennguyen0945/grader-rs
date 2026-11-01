@@ -1,5 +1,9 @@
 package com.example.demo.assignment;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import com.example.demo.user.CustomUserPrincipal;
+import com.example.demo.user.User;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,8 +25,13 @@ public class AssignmentController {
     }
 
     @GetMapping("/{courseId}/assignments")
-    public List<AssignmentService.AssignmentResponseDto> getAssignmentsByCourseId(@PathVariable Long courseId, @RequestParam Long userId) {
-        return assignmentService.getAssignmentsByCourseIdAndUserId(courseId, userId);
+    public List<AssignmentService.AssignmentResponseDto> getAssignmentsByCourseId(
+            @PathVariable Long courseId,
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        boolean isLecturer = principal != null && principal.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_" + User.Role.LECTURER.name()));
+        Long userId = principal != null ? principal.getId() : null;
+        return assignmentService.getAssignmentsForCourse(courseId, userId, isLecturer);
     }
     
     @PostMapping("/{courseId}/assignments")
@@ -40,6 +49,7 @@ public class AssignmentController {
             request.allowedLanguages()
     );
     }
+
 
     public record CreateAssignmentRequest(
         @NotNull Long userId,

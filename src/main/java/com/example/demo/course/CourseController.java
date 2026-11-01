@@ -1,6 +1,10 @@
 package com.example.demo.course;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import com.example.demo.user.CustomUserPrincipal;
+import com.example.demo.user.User;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -17,8 +21,13 @@ public class CourseController {
         this.courseService = courseService;
     }
     @GetMapping
-    public List<Course> getCourses() {
-        return courseService.getAllCourses();
+    public List<Course> getCourses(@AuthenticationPrincipal CustomUserPrincipal principal) {
+        if (principal == null) {
+            return courseService.getAllCourses();
+        }
+        boolean isLecturer = principal.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_" + User.Role.LECTURER.name()));
+        return courseService.getCoursesForUser(principal.getId(), isLecturer);
     }
     @GetMapping("/{id}")
     public Course getCourseById(@PathVariable Long id) {
@@ -53,4 +62,5 @@ public class CourseController {
     public record UpdateCourseRequest (String courseName, String description){
     }
 }
+
 

@@ -35,21 +35,23 @@ public class AssignmentResourceControllerTest {
     void fetchSingleAssignment_returnsAssignment() throws Exception {
         Long courseId = 1L;
         Long assignmentId = 1L;
-        AssignmentService.AssignmentResponseDto assignmentResponseDto = 
-            new AssignmentService.AssignmentResponseDto(
+        AssignmentService.AssignmentDetailResponseDto assignmentDetailResponseDto = 
+            new AssignmentService.AssignmentDetailResponseDto(
+                assignmentId,
                 courseId,
-                1L,
                 1L,
                 "B001",
                 "Print skibidi", 
-                Assignment.AssignmentStatus.DRAFT,
+                Assignment.AssignmentStatus.PUBLISHED,
                 null,
                 null,
                 null,
                 null,
-                null
+                null,
+                List.of()
             );
-        when(assignmentService.fetchSingleAssignment(eq(assignmentId))).thenReturn(assignmentResponseDto);
+        when(assignmentService.fetchAssignmentWorkspaceDetail(eq(assignmentId), any(), any(Boolean.class)))
+                .thenReturn(assignmentDetailResponseDto);
         mockMvc.perform(get("/api/assignments/" + assignmentId))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.code").value("B001"));
@@ -92,7 +94,7 @@ public class AssignmentResourceControllerTest {
         @Test
     void fetchSingleAssignment_whenNotFound_returnsNotFound() throws Exception {
         Long assignmentId = 999L;
-        when(assignmentService.fetchSingleAssignment(eq(assignmentId)))
+        when(assignmentService.fetchAssignmentWorkspaceDetail(eq(assignmentId), any(), any(Boolean.class)))
             .thenThrow(new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND));
 
         mockMvc.perform(get("/api/assignments/" + assignmentId))
