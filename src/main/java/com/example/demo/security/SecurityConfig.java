@@ -2,6 +2,7 @@ package com.example.demo.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -42,6 +43,16 @@ public class SecurityConfig {
                             SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                     .requestMatchers("/api/auth/**").permitAll()
+                    // Course mutations restricted to LECTURER
+                    .requestMatchers(HttpMethod.POST, "/api/courses").hasRole("LECTURER")
+                    .requestMatchers(HttpMethod.PATCH, "/api/courses/**").hasRole("LECTURER")
+                    .requestMatchers(HttpMethod.DELETE, "/api/courses/**").hasRole("LECTURER")
+                    // Assignment mutations restricted to LECTURER
+                    .requestMatchers(HttpMethod.POST, "/api/courses/*/assignments").hasRole("LECTURER")
+                    .requestMatchers(HttpMethod.PATCH, "/api/assignments/**").hasRole("LECTURER")
+                    .requestMatchers(HttpMethod.DELETE, "/api/assignments/**").hasRole("LECTURER")
+                    // Test case management restricted to LECTURER
+                    .requestMatchers("/api/assignments/*/tests/**").hasRole("LECTURER")
                     .anyRequest().authenticated())
             .addFilterBefore(
                     jwtAuthenticationFilter,
