@@ -2,20 +2,22 @@ package com.example.demo.submission;
 
 import java.util.List;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.example.demo.user.CustomUserPrincipal;
+import com.example.demo.user.User;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
 @RestController
-@RequestMapping("/api/assignments")
+@RequestMapping("/api")
 public class SubmissionController {
 
     private final SubmissionService submissionService;
@@ -24,31 +26,42 @@ public class SubmissionController {
         this.submissionService = submissionService;
     }
 
-    @PostMapping("/{assignmentId}/submissions")
+    @PostMapping("/assignments/{assignmentId}/submissions")
     public SubmissionService.SubmissionResponseDto createSubmission(
             @PathVariable Long assignmentId,
+            @AuthenticationPrincipal CustomUserPrincipal principal,
             @Valid @RequestBody CreateSubmissionRequest request
     ) {
         return submissionService.createSubmissionByAssignmentIdAndUserId(
             assignmentId,
-            request.userId(),
+            principal.getId(),
             request.sourceCode()
         );
     }
 
-    @GetMapping("/{assignmentId}/submissions")
+    @GetMapping("/assignments/{assignmentId}/submissions")
     public List<SubmissionService.SubmissionResponseDto> getSubmissions(
             @PathVariable Long assignmentId,
-            @RequestParam Long userId
+            @AuthenticationPrincipal CustomUserPrincipal principal
     ) {
         return submissionService.getSubmissionsByAssignmentIdAndUserId(
             assignmentId,
-            userId
+            principal.getId()
         );
     }
 
+    @GetMapping("/submissions/{submissionId}")
+    public SubmissionService.SubmissionDetailResponseDto getSubmissionById(
+            @PathVariable Long submissionId,
+            @AuthenticationPrincipal CustomUserPrincipal principal
+    ) {
+        boolean isLecturer = principal != null && principal.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_" + User.Role.LECTURER.name()));
+        Long userId = principal != null ? principal.getId() : null;
+        return submissionService.getSubmissionDetail(submissionId, userId, isLecturer);
+    }
+
     public record CreateSubmissionRequest(
-            @NotNull Long userId,
             @NotBlank String sourceCode
     ) {
     }
