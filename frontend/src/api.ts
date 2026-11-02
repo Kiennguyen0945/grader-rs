@@ -18,7 +18,11 @@ export function setToken(token: string | null) {
   } catch {}
 }
 
-export async function apiRequest<T = any>(path: string, options: RequestInit = {}): Promise<T> {
+export interface ApiRequestOptions extends Omit<RequestInit, 'body'> {
+  body?: any;
+}
+
+export async function apiRequest<T = any>(path: string, options: ApiRequestOptions = {}): Promise<T> {
   const headers: Record<string, string> = {
     ...(options.headers as Record<string, string>),
   };
@@ -28,14 +32,16 @@ export async function apiRequest<T = any>(path: string, options: RequestInit = {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  if (options.body && typeof options.body === 'object' && !(options.body instanceof FormData)) {
+  let body = options.body;
+  if (body && typeof body === 'object' && !(body instanceof FormData)) {
     headers['Content-Type'] = 'application/json';
-    options.body = JSON.stringify(options.body);
+    body = JSON.stringify(body);
   }
 
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
     headers,
+    body,
   });
 
   if (res.status === 401) {

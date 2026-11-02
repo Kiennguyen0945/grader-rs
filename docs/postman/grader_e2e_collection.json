@@ -1,0 +1,384 @@
+{
+  "info": {
+    "_postman_id": "grader-rs-test-collection-v1",
+    "name": "Grader-RS E2E Test Suite",
+    "description": "Backup Postman collection to test the entire student & lecturer grading workflow against Spring Boot 3, RabbitMQ, and the grader worker.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api",
+      "type": "string"
+    },
+    {
+      "key": "lecturerToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "studentToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "lecturerId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "studentId",
+      "value": "2",
+      "type": "string"
+    },
+    {
+      "key": "courseId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "assignmentId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "submissionId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01. Auth - Lecturer Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "var jsonData = pm.response.json();",
+              "if (jsonData.accessToken) {",
+              "    pm.collectionVariables.set('lecturerToken', jsonData.accessToken);",
+              "    pm.test('Lecturer Token extracted', function () {",
+              "        pm.expect(jsonData.accessToken).to.be.a('string');",
+              "    });",
+              "    try {",
+              "        var base64 = jsonData.accessToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');",
+              "        var payload = JSON.parse(atob(base64));",
+              "        if (payload.sub) {",
+              "            pm.collectionVariables.set('lecturerId', payload.sub);",
+              "        }",
+              "    } catch (e) {",
+              "        console.log('Failed to parse JWT payload', e);",
+              "    }",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"lady\",\n  \"password\": \"123456\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "02. Auth - Student Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "var jsonData = pm.response.json();",
+              "if (jsonData.accessToken) {",
+              "    pm.collectionVariables.set('studentToken', jsonData.accessToken);",
+              "    pm.test('Student Token extracted', function () {",
+              "        pm.expect(jsonData.accessToken).to.be.a('string');",
+              "    });",
+              "    try {",
+              "        var base64 = jsonData.accessToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');",
+              "        var payload = JSON.parse(atob(base64));",
+              "        if (payload.sub) {",
+              "            pm.collectionVariables.set('studentId', payload.sub);",
+              "        }",
+              "    } catch (e) {",
+              "        console.log('Failed to parse JWT payload', e);",
+              "    }",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"dante\",\n  \"password\": \"123456\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "03. Lecturer - Create Course",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200 || pm.response.code === 201) {",
+              "    var data = pm.response.json();",
+              "    if (data.id) pm.collectionVariables.set('courseId', data.id);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{lecturerToken}}", "type": "string" }]
+        },
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": {{lecturerId}},\n  \"code\": \"CS201\",\n  \"courseName\": \"Data Structures\",\n  \"description\": \"Lists, trees, and algorithm complexity\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/courses",
+          "host": ["{{baseUrl}}"],
+          "path": ["courses"]
+        }
+      }
+    },
+    {
+      "name": "04. Lecturer - Create Assignment",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200 || pm.response.code === 201) {",
+              "    var data = pm.response.json();",
+              "    if (data.id) pm.collectionVariables.set('assignmentId', data.id);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{lecturerToken}}", "type": "string" }]
+        },
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": {{lecturerId}},\n  \"code\": \"LAB1\",\n  \"title\": \"Echo Input\",\n  \"assignmentStatus\": \"PUBLISHED\",\n  \"description\": \"Read lines until EOF and print each line.\",\n  \"submissionLimit\": 3,\n  \"allowedLanguages\": [\"JAVA\"]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/courses/{{courseId}}/assignments",
+          "host": ["{{baseUrl}}"],
+          "path": ["courses", "{{courseId}}", "assignments"]
+        }
+      }
+    },
+    {
+      "name": "05. Lecturer - Add Public Test Case",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{lecturerToken}}", "type": "string" }]
+        },
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Sample: Basic Echo\",\n  \"input\": \"hello world\",\n  \"expectedOutput\": \"hello world\",\n  \"isPublic\": true,\n  \"timeLimitMs\": 2000,\n  \"memoryLimitKib\": 262144\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/assignments/{{assignmentId}}/tests",
+          "host": ["{{baseUrl}}"],
+          "path": ["assignments", "{{assignmentId}}", "tests"]
+        }
+      }
+    },
+    {
+      "name": "06. Student - Get Enrolled Courses",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{studentToken}}", "type": "string" }]
+        },
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/courses",
+          "host": ["{{baseUrl}}"],
+          "path": ["courses"]
+        }
+      }
+    },
+    {
+      "name": "07. Student - Get Course Assignments",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{studentToken}}", "type": "string" }]
+        },
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/courses/{{courseId}}/assignments",
+          "host": ["{{baseUrl}}"],
+          "path": ["courses", "{{courseId}}", "assignments"]
+        }
+      }
+    },
+    {
+      "name": "08. Student - Get Workspace Detail (Public Tests Only)",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{studentToken}}", "type": "string" }]
+        },
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/assignments/{{assignmentId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["assignments", "{{assignmentId}}"]
+        }
+      }
+    },
+    {
+      "name": "09. Student - Submit Solution (Accepted)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "var data = pm.response.json();",
+              "if (data.submissionId) {",
+              "    pm.collectionVariables.set('submissionId', data.submissionId);",
+              "    pm.test('Status is QUEUED', function() {",
+              "        pm.expect(data.status).to.eql('QUEUED');",
+              "    });",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{studentToken}}", "type": "string" }]
+        },
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"sourceCode\": \"import java.io.*;\\n\\npublic class Main {\\n  public static void main(String[] args) throws Exception {\\n    BufferedReader r = new BufferedReader(new InputStreamReader(System.in));\\n    String l;\\n    while ((l = r.readLine()) != null) {\\n      System.out.println(l);\\n    }\\n  }\\n}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/assignments/{{assignmentId}}/submissions",
+          "host": ["{{baseUrl}}"],
+          "path": ["assignments", "{{assignmentId}}", "submissions"]
+        }
+      }
+    },
+    {
+      "name": "10. Student - Poll Verdict",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "var data = pm.response.json();",
+              "pm.test('Submission ID matches', function() {",
+              "    pm.expect(data.submissionId.toString()).to.eql(pm.collectionVariables.get('submissionId').toString());",
+              "});",
+              "console.log('Current Verdict Status:', data.status, 'Grade:', data.grade);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{studentToken}}", "type": "string" }]
+        },
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/submissions/{{submissionId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["submissions", "{{submissionId}}"]
+        }
+      }
+    },
+    {
+      "name": "11. Security - Student Forbidden Test Access",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Access denied: status 403', function() {",
+              "    pm.expect(pm.response.code).to.eql(403);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{studentToken}}", "type": "string" }]
+        },
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"code\": \"HACK101\",\n  \"courseName\": \"Malicious Course\",\n  \"userId\": {{studentId}}\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/courses",
+          "host": ["{{baseUrl}}"],
+          "path": ["courses"]
+        }
+      }
+    }
+  ]
+}
+

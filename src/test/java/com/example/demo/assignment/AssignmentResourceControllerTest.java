@@ -21,6 +21,8 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import tools.jackson.databind.ObjectMapper;
 
+import java.util.List;
+
 
 @WebMvcTest(AssignmentResourceController.class)
 public class AssignmentResourceControllerTest {

@@ -351,3 +351,32 @@ tr.expanded .expandchev,.trow.expanded .expandchev{transform:rotate(90deg);color
   #scr-workspace[data-wsview="result"] .ws-dock{max-height:none;flex:1}
 }
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001s!important;transition-duration:.001s!important}}
+/* ---------- LEADERBOARD (podium + trend cells, from leaderboard-dark.html) ---------- */
+.dispnum{font-family:var(--disp);font-weight:750;letter-spacing:-.02em}
+.podiumrow{display:flex;gap:14px;align-items:flex-end;margin-bottom:18px}
+.podium{flex:1;background:var(--panel);border:1px solid var(--line-soft);border-radius:13px;padding:20px 16px 18px;text-align:center;position:relative;transition:.2s;cursor:default}
+.podium:hover{transform:translateY(-3px);border-color:var(--line)}
+.podium .prank{position:absolute;top:-11px;left:50%;transform:translateX(-50%);font-family:var(--disp);font-weight:800;font-size:12px;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--panel-3);border:1px solid var(--line);color:var(--mut)}
+.podium .avatar{width:52px;height:52px;border-radius:14px;font-size:19px;margin:6px auto 10px}
+.podium .pname{font-weight:600;font-size:14.5px}
+.podium .puser{font-family:var(--mono);font-size:10.5px;color:var(--dim);margin:1px 0 10px}
+.podium .pscore{font-family:var(--disp);font-weight:800;font-size:34px;letter-spacing:-.03em;line-height:1}
+.podium .pmeta{display:flex;justify-content:center;gap:12px;margin-top:10px;font-family:var(--mono);font-size:10.5px;color:var(--dim)}
+.podium.p1{border-color:color-mix(in srgb, var(--amber) 55%, transparent);background:linear-gradient(180deg, color-mix(in srgb, var(--amber) 12%, transparent), var(--panel) 62%);box-shadow:0 14px 40px rgba(232,180,90,.16);padding-top:30px;padding-bottom:26px}
+.podium.p1 .prank{background:var(--amber);color:var(--amber-ink);border-color:var(--amber);box-shadow:0 0 16px rgba(232,180,90,.6)}
+.podium.p1 .pscore{color:var(--accent-text);text-shadow:0 0 28px rgba(232,180,90,.45)}
+.podium.p1 .avatar{color:var(--student)}
+.podium.p2 .prank{background:color-mix(in srgb, var(--ink) 14%, transparent);color:var(--ink);border-color:color-mix(in srgb, var(--ink) 30%, transparent)}
+.podium.p2 .pscore{color:var(--ink)}
+.podium.p3 .prank{background:color-mix(in srgb, var(--violet) 22%, transparent);color:var(--violet-hi);border-color:color-mix(in srgb, var(--violet) 45%, transparent)}
+.podium.p3 .pscore{color:var(--violet-hi)}
+.podium.you::after{content:"YOU";position:absolute;top:10px;right:10px;font-family:var(--mono);font-size:9px;letter-spacing:.16em;color:var(--accent-text);border:1px solid color-mix(in srgb, var(--amber) 45%, transparent);border-radius:5px;padding:2px 6px;background:color-mix(in srgb, var(--amber) 10%, transparent)}
+.trend{font-family:var(--mono);font-size:11px;font-weight:600;white-space:nowrap}
+.trend.up{color:var(--ok)}
+.trend.down{color:var(--err)}
+.trend.same{color:var(--dim)}
+tr.lb-you td{background:color-mix(in srgb, var(--amber) 8%, transparent)}
+tr.lb-you td:first-child{box-shadow:inset 3px 0 0 var(--amber)}
+.lb-scorecell{font-family:var(--mono);font-weight:700;font-size:15px}
+tr.lb-top1 .lb-scorecell{color:var(--accent-text)}
+@media (max-width:1100px){.podiumrow{flex-direction:column}.podium.p1{order:-1}}

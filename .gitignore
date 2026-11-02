@@ -35,3 +35,8 @@ build/
 out/
 
 docs/assets
+
+### Frontend ###
+frontend/node_modules/
+frontend/dist/
+frontend/tsconfig.tsbuildinfo
