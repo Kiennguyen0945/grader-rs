@@ -28,6 +28,7 @@ import com.example.grader_worker.submission.SubmissionRepository;
 import com.example.grader_worker.submissiontest.SubmissionTest;
 import com.example.grader_worker.submissiontest.SubmissionTestRepository;
 import com.example.grader_worker.test.Test;
+import com.example.grader_worker.config.KubernetesJobService;
 
 import jakarta.annotation.PreDestroy;
 
@@ -42,15 +43,18 @@ public class GradingService {
     private final SubmissionTestRepository submissionTestRepository;
     private final SubmissionRepository submissionRepository;
     private final GradingRunRepository gradingRunRepository;
+    private final KubernetesJobService kubernetesJobService;
     public GradingService(
             AssignmentRepository assignmentRepository, 
             SubmissionTestRepository submissionTestRepository, 
             SubmissionRepository submissionRepository, 
-            GradingRunRepository gradingRunRepository) {
+            GradingRunRepository gradingRunRepository, 
+            KubernetesJobService kubernetesJobService) {
         this.assignmentRepository = assignmentRepository;
         this.submissionTestRepository = submissionTestRepository;
         this.submissionRepository = submissionRepository;
         this.gradingRunRepository = gradingRunRepository;
+        this.kubernetesJobService = kubernetesJobService;
     }
    public void grade(Submission submission, GradingRun gradingRun) throws IOException {
         if (gradingRun.getStatus() != GradingRun.Status.QUEUED) {
@@ -59,6 +63,7 @@ public class GradingService {
         Assignment assignment = findAssignment(submission);
         validateAssignment(assignment, submission);
         Path tempDir = Files.createTempDirectory("runner-");
+        kubernetesJobService.createTestJob(1L);
         try {
             Path mainJava = tempDir.resolve("Main.java");
             Files.writeString(mainJava, submission.getSourceCode());

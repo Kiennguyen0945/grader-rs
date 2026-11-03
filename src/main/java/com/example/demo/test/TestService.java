@@ -24,6 +24,7 @@ public class TestService {
 
   
     public TestResponseDto createTestByAssignmentId(Long assignmentId, String name, String input, String expectedOutput, boolean isPublic, Long timeLimitMs, Long memoryLimitKib) {
+        System.out.println("Test Case Service reached");
         Assignment assignment = assignmentRepository.findById(assignmentId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assignment Not Found."));
         int displayOrder = testRepository.countByAssignmentId(assignmentId);
         Test test = new Test(assignment, name, input, expectedOutput, isPublic, displayOrder + 1, timeLimitMs, memoryLimitKib);

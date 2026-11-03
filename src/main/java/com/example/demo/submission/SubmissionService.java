@@ -19,6 +19,7 @@ import com.example.demo.user.UserRepository;
 
 import jakarta.transaction.Transactional;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -222,7 +223,7 @@ public class SubmissionService {
         List<SubmissionTestResultDto> sampleTestResults
     ) {}
 
-    public record SubmissionGradingMessage(Long submissionId, Long gradingRunId) {
+    public record SubmissionGradingMessage(Long submissionId, Long gradingRunId) implements Serializable {
     }
 
     public record SubmissionResponseDto(

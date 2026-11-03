@@ -20,7 +20,7 @@ public class CourseService {
         this.userRepository = userRepository;
     }
     @Transactional
-    public Course createCourse (
+    public CourseResponseDto createCourse (
         Long userId,
         String code,
         String courseName,
@@ -36,7 +36,7 @@ public class CourseService {
             description
         );
         course.addUser(user);
-        return courseRepository.save(course);
+        return CourseResponseDto.fromEntity(courseRepository.save(course));
     }
     @Transactional
     public void deleteCourse(Long id)
@@ -50,7 +50,7 @@ public class CourseService {
     }
 
     @Transactional 
-    public Course partialUpdateCourse(Long id, String courseName, String description) {
+    public CourseResponseDto partialUpdateCourse(Long id, String courseName, String description) {
         Course course = courseRepository.findById(id)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Course not found."));
         if(courseName != null) {
@@ -59,23 +59,33 @@ public class CourseService {
         if(description != null) {
             course.setDescription(description);
         }
-        return course;
+        return CourseResponseDto.fromEntity(courseRepository.save(course));
     }
 
-    public List<Course> getAllCourses() {
-        return courseRepository.findAll();
+    public List<CourseResponseDto> getAllCourses() {
+        return courseRepository.findAll().stream().map(CourseResponseDto::fromEntity).toList();
     }
 
-    public List<Course> getCoursesForUser(Long userId, boolean isLecturer) {
-        if (isLecturer) {
-            return courseRepository.findAll();
-        }
-        return courseRepository.findEnrolledCoursesByUserId(userId);
+    public List<CourseResponseDto> getCoursesForUser(Long userId, boolean isLecturer) {
+        List<Course> courses = isLecturer
+                ? courseRepository.findAll()
+                : courseRepository.findEnrolledCoursesByUserId(userId);
+        return courses.stream().map(CourseResponseDto::fromEntity).toList();
     }
 
-    public Course getCourseById(Long id) {
-        Course course = courseRepository.findById(id).orElseThrow(() 
+    public CourseResponseDto getCourseById(Long id) {
+        return courseRepository.findById(id).map(CourseResponseDto::fromEntity).orElseThrow(() 
         -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        return course;
+    }
+
+    public record CourseResponseDto(
+        Long id,
+        String code,
+        String courseName,
+        String description 
+    ) {
+       public static CourseResponseDto fromEntity(Course course) {
+        return new CourseResponseDto(course.getId(), course.getCode(), course.getCourseName(), course.getDescription());
+       }
     }
 }

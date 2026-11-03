@@ -21,7 +21,7 @@ public class CourseController {
         this.courseService = courseService;
     }
     @GetMapping
-    public List<Course> getCourses(@AuthenticationPrincipal CustomUserPrincipal principal) {
+    public List<CourseService.CourseResponseDto> getCourses(@AuthenticationPrincipal CustomUserPrincipal principal) {
         if (principal == null) {
             return courseService.getAllCourses();
         }
@@ -30,7 +30,7 @@ public class CourseController {
         return courseService.getCoursesForUser(principal.getId(), isLecturer);
     }
     @GetMapping("/{id}")
-    public Course getCourseById(@PathVariable Long id) {
+    public CourseService.CourseResponseDto getCourseById(@PathVariable Long id) {
         return courseService.getCourseById(id); 
     }
 
@@ -42,13 +42,13 @@ public class CourseController {
 
     @PatchMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public Course partialUpdateCourse(@PathVariable Long id, @Valid @RequestBody UpdateCourseRequest request)
+    public CourseService.CourseResponseDto partialUpdateCourse(@PathVariable Long id, @Valid @RequestBody UpdateCourseRequest request)
     {
         return courseService.partialUpdateCourse(id, request.courseName(), request.description());
     }
 
     @PostMapping
-    public Course createCourse (@RequestBody CreateCourseRequest request) {
+    public CourseService.CourseResponseDto createCourse (@RequestBody CreateCourseRequest request) {
         return courseService.createCourse(
             request.userId(),
             request.code(),

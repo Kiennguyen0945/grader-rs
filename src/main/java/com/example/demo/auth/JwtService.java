@@ -40,6 +40,7 @@ public class JwtService {
     }
 
     public boolean isValid(String token, CustomUserPrincipal user) { 
+        System.out.println("User id is valid");
         return extractUserId(token).equals(user.getId().toString());
     }
 }

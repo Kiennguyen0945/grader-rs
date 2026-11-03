@@ -43,20 +43,21 @@ class CourseServiceTest {
         when(courseRepository.existsByCode("CS505")).thenReturn(false);
         Course savedCourse = new Course("CS505", "Harvard Course", "");
         when(courseRepository.save(any(Course.class))).thenReturn(savedCourse);
-        Course result = courseService.createCourse(userId, "CS505", "Harvard Course", "");
-        assertEquals("CS505", result.getCode());
-        assertEquals("Harvard Course", result.getCourseName());
+        CourseService.CourseResponseDto result = courseService.createCourse(userId, "CS505", "Harvard Course", "");
+        assertEquals("CS505", result.code());
+        assertEquals("Harvard Course", result.courseName());
         verify(courseRepository).save(any(Course.class));
     }
     
+    @Test
     void getAllCourses_returnCourseList() {
         List<Course> mockCourses = List.of(
             new Course("CS505", "Harvard", "")
         );
         when(courseRepository.findAll()).thenReturn(mockCourses);
-        List<Course> result = courseService.getAllCourses();
+        List<CourseService.CourseResponseDto> result = courseService.getAllCourses();
         assertEquals(1, result.size());
-        assertEquals("CS505", result.get(0).getCode());
+        assertEquals("CS505", result.get(0).code());
         
     }
 }

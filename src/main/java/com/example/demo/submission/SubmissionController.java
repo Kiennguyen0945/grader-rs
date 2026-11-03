@@ -2,6 +2,8 @@ package com.example.demo.submission;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,6 +23,8 @@ import jakarta.validation.constraints.NotBlank;
 public class SubmissionController {
 
     private final SubmissionService submissionService;
+    private static final Logger log = LoggerFactory.getLogger(SubmissionController.class);
+
 
     public SubmissionController(SubmissionService submissionService) {
         this.submissionService = submissionService;
@@ -32,6 +36,10 @@ public class SubmissionController {
             @AuthenticationPrincipal CustomUserPrincipal principal,
             @Valid @RequestBody CreateSubmissionRequest request
     ) {
+        log.info("POST reached: assignmentId={}, userId={}, authorities={}",
+                assignmentId,
+                principal.getId(),
+                principal.getAuthorities());
         return submissionService.createSubmissionByAssignmentIdAndUserId(
             assignmentId,
             principal.getId(),
@@ -44,6 +52,7 @@ public class SubmissionController {
             @PathVariable Long assignmentId,
             @AuthenticationPrincipal CustomUserPrincipal principal
     ) {
+        
         return submissionService.getSubmissionsByAssignmentIdAndUserId(
             assignmentId,
             principal.getId()
