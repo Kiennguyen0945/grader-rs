@@ -16,6 +16,7 @@ import org.mockito.MockitoAnnotations;
 
 import com.example.grader_worker.assignment.Assignment;
 import com.example.grader_worker.assignment.AssignmentRepository;
+import com.example.grader_worker.config.KubernetesJobService;
 import com.example.grader_worker.gradingrun.GradingRun;
 import com.example.grader_worker.gradingrun.GradingRunRepository;
 import com.example.grader_worker.submission.Submission;
@@ -38,6 +39,8 @@ class GradingServiceTest {
     @Mock
     private GradingRunRepository gradingRunRepository;
 
+    @Mock
+    private KubernetesJobService kubernetesJobService;
 
     private GradingService gradingService;
     private Assignment assignment;
@@ -52,7 +55,8 @@ class GradingServiceTest {
             assignmentRepository,
             submissionTestRepository,
             submissionRepository,
-            gradingRunRepository
+            gradingRunRepository,
+            kubernetesJobService
         );
 
         assignment = new Assignment(
