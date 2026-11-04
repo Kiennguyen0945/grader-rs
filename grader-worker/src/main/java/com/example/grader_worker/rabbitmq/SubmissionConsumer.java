@@ -13,11 +13,13 @@ import com.example.grader_worker.gradingrun.GradingRunRepository;
 import com.example.grader_worker.submission.Submission;
 import com.example.grader_worker.submission.SubmissionRepository;
 
+
 @Component
 public class SubmissionConsumer {
     private final SubmissionRepository submissionRepository;
     private final GradingRunRepository gradingRunRepository;
     private final GradingService gradingService;
+
     public SubmissionConsumer(
         SubmissionRepository submissionRepository,
         GradingRunRepository gradingRunRepository,
@@ -50,7 +52,7 @@ public class SubmissionConsumer {
         }
             
     }
-    public record SubmissionGradingMessage(
+    public record SubmissionGradingMessage (
         Long submissionId,
         Long gradingRunId
     ) {}

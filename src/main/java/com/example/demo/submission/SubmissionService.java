@@ -23,6 +23,10 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Service 
 public class SubmissionService {
 
@@ -34,7 +38,8 @@ public class SubmissionService {
     private final GradingRunRepository gradingRunRepository;
     private final SubmissionTestRepository submissionTestRepository;
     private final TestRepository testRepository;
-
+    private static final Logger log =
+            LoggerFactory.getLogger(SubmissionController.class);
     public SubmissionService(
         SubmissionRepository submissionRepository,
         AssignmentRepository assignmentRepository,
@@ -124,6 +129,8 @@ public class SubmissionService {
         GradingRun gradingRun = new GradingRun(savedSubmission, null, null);
         GradingRun savedGradingRun = gradingRunRepository.save(gradingRun);
         producer.send(savedSubmission.getId(), savedGradingRun.getId());
+        log.info("Producer sent: savedSubmissionId={}, savedGradingRunId={}",
+                savedSubmission.getId(), savedGradingRun.getId());
         return SubmissionResponseDto.fromEntity(
             savedSubmission
         );
@@ -223,7 +230,7 @@ public class SubmissionService {
         List<SubmissionTestResultDto> sampleTestResults
     ) {}
 
-    public record SubmissionGradingMessage(Long submissionId, Long gradingRunId) implements Serializable {
+    public record SubmissionGradingMessage(Long submissionId, Long gradingRunId) {
     }
 
     public record SubmissionResponseDto(

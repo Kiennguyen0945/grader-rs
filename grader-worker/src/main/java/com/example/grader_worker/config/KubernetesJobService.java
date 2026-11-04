@@ -14,7 +14,7 @@ public class KubernetesJobService {
         this.client = client;
     }
 
-    public void createTestJob(Long submissionId) {
+    public void createTestJob(Long submissionId, Long gradingRunId) {
         client.batch()
             .v1()
             .jobs()

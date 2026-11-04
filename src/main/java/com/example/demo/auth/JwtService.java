@@ -30,7 +30,6 @@ public class JwtService {
     }
 
     public String extractUserId(String token) {
-        System.out.println("EXTRACT USER ID");
         return Jwts.parser()
         .verifyWith(key)
         .build()
@@ -40,7 +39,6 @@ public class JwtService {
     }
 
     public boolean isValid(String token, CustomUserPrincipal user) { 
-        System.out.println("User id is valid");
         return extractUserId(token).equals(user.getId().toString());
     }
 }

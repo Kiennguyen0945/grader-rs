@@ -63,7 +63,8 @@ public class GradingService {
         Assignment assignment = findAssignment(submission);
         validateAssignment(assignment, submission);
         Path tempDir = Files.createTempDirectory("runner-");
-        kubernetesJobService.createTestJob(1L);
+        System.out.println("Grading Worker Reached");
+        kubernetesJobService.createTestJob(submission.getId(), gradingRun.getId());
         try {
             Path mainJava = tempDir.resolve("Main.java");
             Files.writeString(mainJava, submission.getSourceCode());
