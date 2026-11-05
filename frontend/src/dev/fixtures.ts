@@ -2,12 +2,14 @@ import type {
   AssignmentDetail,
   AssignmentSummary,
   Course,
+  CourseMember,
   LeaderboardRow,
   NotificationItem,
   SampleTestCase,
   SubmissionDetail,
   SubmissionSummary,
   SubmissionTestResult,
+  TestCase,
 } from '../types';
 
 const MIN = 60_000;
@@ -386,5 +388,145 @@ export const demoLoginMeta = [
   { strong: '42', text: 'students' },
   { strong: '31/42', text: 'submitted · Lab 3' },
 ];
+
+/* ---------------------------------------------------------------------------
+ * Lecturer screens (design-only data — mirrors 09/10/11/12/13 prototypes)
+ * ------------------------------------------------------------------------- */
+
+export const demoMembers: CourseMember[] = [
+  { id: 2, username: 'lan.pham', role: 'LECTURER' },
+  { id: 1, username: 'minh.tran', role: 'STUDENT' },
+  { id: 3, username: 'an.nguyen', role: 'STUDENT' },
+  { id: 4, username: 'thu.vo', role: 'STUDENT' },
+  { id: 5, username: 'huy.le', role: 'STUDENT' },
+  { id: 6, username: 'bao.dang', role: 'STUDENT' },
+  { id: 7, username: 'linh.do', role: 'STUDENT' },
+  { id: 8, username: 'duc.hoang', role: 'STUDENT' },
+];
+
+const LIMITS = { timeLimitMs: 2000, memoryLimitKib: 262144 };
+
+const demoTestsById: Record<number, TestCase[]> = {
+  13: [
+    { testId: 1, name: 'Sample: append three', input: 'APPEND 1\nAPPEND 2\nAPPEND 3\nPRINT', expectedOutput: '1 2 3', isPublic: true, displayOrder: 1, ...LIMITS },
+    { testId: 2, name: 'Sample: prepend order', input: 'PREPEND 5\nPREPEND 2\nPRINT', expectedOutput: '2 5', isPublic: true, displayOrder: 2, ...LIMITS },
+    { testId: 3, name: 'Sample: delete by value', input: 'APPEND 1\nAPPEND 2\nAPPEND 3\nDELETE 2\nPRINT', expectedOutput: '1 3', isPublic: true, displayOrder: 3, ...LIMITS },
+    { testId: 4, name: 'Edge: delete from empty', input: 'DELETE 7\nPRINT', expectedOutput: 'EMPTY', isPublic: false, displayOrder: 4, ...LIMITS },
+    { testId: 5, name: 'Duplicates: first occurrence', input: 'APPEND 4\nAPPEND 9\nAPPEND 4\nDELETE 4\nPRINT', expectedOutput: '9 4', isPublic: false, displayOrder: 5, ...LIMITS },
+    { testId: 6, name: 'Stress: 10 000 ops', input: '(generated · 10 000 lines)', expectedOutput: '(checksum verified)', isPublic: false, displayOrder: 6, ...LIMITS },
+    { testId: 7, name: 'Interleaved ops + reverse', input: 'APPEND 1\nPREPEND 0\nAPPEND 2\nREVERSE\nDELETE 1\nPRINT', expectedOutput: '2 0', isPublic: false, displayOrder: 7, ...LIMITS },
+  ],
+  21: [
+    { testId: 11, name: 'Sample: BFS order', input: '4\n0 1\n1 2\n2 3', expectedOutput: '0 1 2 3', isPublic: true, displayOrder: 1, ...LIMITS },
+    { testId: 12, name: 'Disconnected graph', input: '3\n', expectedOutput: '0', isPublic: false, displayOrder: 2, ...LIMITS },
+  ],
+};
+
+export function demoTestsFor(assignmentId: number): TestCase[] {
+  if (!demoTestsById[assignmentId]) demoTestsById[assignmentId] = [];
+  return demoTestsById[assignmentId];
+}
+
+let demoTestSeq = 900;
+
+export function demoCreateTest(assignmentId: number, body: Partial<TestCase>): TestCase {
+  const list = demoTestsFor(assignmentId);
+  const created: TestCase = {
+    testId: ++demoTestSeq,
+    name: body.name ?? null,
+    input: body.input ?? null,
+    expectedOutput: body.expectedOutput ?? '',
+    isPublic: Boolean(body.isPublic),
+    displayOrder: list.length + 1,
+    timeLimitMs: body.timeLimitMs ?? 2000,
+    memoryLimitKib: body.memoryLimitKib ?? 262144,
+  };
+  list.push(created);
+  return created;
+}
+
+export function demoUpdateTest(assignmentId: number, testId: number, body: Partial<TestCase>): TestCase {
+  const found = demoTestsFor(assignmentId).find((t) => t.testId === testId);
+  if (!found) throw new Error('Test case not found.');
+  Object.assign(found, body);
+  return found;
+}
+
+export function demoDeleteTest(assignmentId: number, testId: number): void {
+  const list = demoTestsFor(assignmentId);
+  const index = list.findIndex((t) => t.testId === testId);
+  if (index >= 0) list.splice(index, 1);
+}
+
+/* ---- review queue ------------------------------------------------------- */
+
+const REVIEW_QUEUE: Array<{
+  username: string;
+  attempt: number;
+  status: SubmissionSummary['status'];
+  grade: number | null;
+  offsetMs: number;
+}> = [
+  { username: 'quan.vo', attempt: 1, status: 'QUEUED', grade: null, offsetMs: -4 * MIN },
+  { username: 'thao.truong', attempt: 1, status: 'RUNNING', grade: null, offsetMs: -22 * MIN },
+  { username: 'nam.pham', attempt: 2, status: 'WRONG_ANSWER', grade: 4.0, offsetMs: -3 * HOUR },
+  { username: 'minh.tran', attempt: 2, status: 'TIME_LIMIT_EXCEEDED', grade: 5.0, offsetMs: -5 * HOUR },
+  { username: 'linh.do', attempt: 2, status: 'TIME_LIMIT_EXCEEDED', grade: 5.0, offsetMs: -6 * HOUR },
+  { username: 'bao.dang', attempt: 3, status: 'ACCEPTED', grade: 8.0, offsetMs: -7 * HOUR },
+  { username: 'thu.vo', attempt: 2, status: 'WRONG_ANSWER', grade: 6.5, offsetMs: -9 * HOUR },
+  { username: 'hien.bui', attempt: 2, status: 'MEMORY_LIMIT_EXCEEDED', grade: 3.0, offsetMs: -11 * HOUR },
+  { username: 'mai.nguyen', attempt: 1, status: 'ACCEPTED', grade: 9.5, offsetMs: -12 * HOUR },
+  { username: 'huy.le', attempt: 1, status: 'ACCEPTED', grade: 10.0, offsetMs: -22 * HOUR },
+  { username: 'duc.hoang', attempt: 1, status: 'COMPILE_ERROR', grade: null, offsetMs: -1 * DAY },
+  { username: 'an.nguyen', attempt: 2, status: 'RUNTIME_ERROR', grade: 2.0, offsetMs: -1 * DAY - 2 * HOUR },
+];
+
+export function demoReviewQueueFor(assignmentId: number): SubmissionSummary[] {
+  return REVIEW_QUEUE.map((row, index) => ({
+    submissionId: 900 - index,
+    assignmentId,
+    userId: 200 + index,
+    username: row.username,
+    sourceCode: TEMPLATE,
+    status: row.status,
+    grade: row.grade,
+    attemptNumber: row.attempt,
+    submittedAt: at(row.offsetMs),
+  }));
+}
+
+/* ---- assignment mutations ---------------------------------------------- */
+
+export function demoCreateAssignment(courseId: number, body: Record<string, unknown>): AssignmentSummary {
+  const created: AssignmentSummary = {
+    id: Math.max(...demoAssignments.map((a) => a.id)) + 1,
+    courseId,
+    code: String(body.code ?? 'NEW'),
+    title: String(body.title ?? 'Untitled assignment'),
+    assignmentStatus: 'DRAFT',
+    description: (body.description as string) ?? null,
+    submissionLimit: Number(body.submissionLimit ?? 3),
+    openingTime: (body.openingTime as string) ?? null,
+    closingTime: (body.closingTime as string) ?? null,
+    allowedLanguages: ['JAVA'],
+    courseCode: demoCourses.find((c) => c.id === courseId)?.code,
+    testCount: 0,
+    submissionCount: 0,
+  };
+  demoAssignments.unshift(created);
+  return created;
+}
+
+export function demoUpdateAssignment(assignmentId: number, body: Record<string, unknown>): AssignmentSummary {
+  const found = demoAssignments.find((a) => a.id === assignmentId);
+  if (!found) throw new Error('Assignment not found.');
+  Object.assign(found, body);
+  return found;
+}
+
+export function demoDeleteAssignment(assignmentId: number): void {
+  const index = demoAssignments.findIndex((a) => a.id === assignmentId);
+  if (index >= 0) demoAssignments.splice(index, 1);
+}
 
 

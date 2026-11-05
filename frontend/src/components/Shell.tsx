@@ -33,7 +33,17 @@ const TONE_COLOR: Record<NotificationItem['tone'], string> = {
   violet: 'var(--violet)',
 };
 
-export type ShellSection = 'dashboard' | 'courses' | 'history' | 'workspace';
+export type ShellSection =
+  | 'dashboard'
+  | 'courses'
+  | 'history'
+  | 'workspace'
+  | 'teach'
+  | 'teach-courses'
+  | 'teach-course'
+  | 'teach-tests'
+  | 'teach-queue'
+  | 'teach-review';
 
 export function Shell({ active, children }: { active: ShellSection; children: React.ReactNode }) {
   const { session, logout } = useAuth();
@@ -74,6 +84,7 @@ export function Shell({ active, children }: { active: ShellSection; children: Re
   const username = session?.username ?? 'student';
   const name = displayName(username);
   const role = (session?.roles[0] ?? 'ROLE_STUDENT').replace('ROLE_', '');
+  const isLecturer = session?.roles?.includes('ROLE_LECTURER') ?? false;
 
   const navItem = (target: ShellSection, label: string, icon: React.ReactNode, href: string) => (
     <a className={active === target ? 'navitem on' : 'navitem'} href={`#${href}`} style={{ textDecoration: 'none' }}>
@@ -97,10 +108,20 @@ export function Shell({ active, children }: { active: ShellSection; children: Re
             </div>
           </div>
           <nav id="sidenav">
-            <div className="navsec">student</div>
-            {navItem('dashboard', 'Dashboard', <GridIcon />, '/dashboard')}
-            {navItem('courses', 'My courses', <Book />, '/courses')}
-            {navItem('history', 'Submissions', <ListIcon />, '/history')}
+            {isLecturer ? (
+              <>
+                <div className="navsec">teaching</div>
+                {navItem('teach', 'Dashboard', <GridIcon />, '/teach')}
+                {navItem('teach-courses', 'Courses', <Book />, '/teach/courses')}
+              </>
+            ) : (
+              <>
+                <div className="navsec">student</div>
+                {navItem('dashboard', 'Dashboard', <GridIcon />, '/dashboard')}
+                {navItem('courses', 'My courses', <Book />, '/courses')}
+                {navItem('history', 'Submissions', <ListIcon />, '/history')}
+              </>
+            )}
           </nav>
           <div className="side-foot">
             <div className="userchip" id="userchip">

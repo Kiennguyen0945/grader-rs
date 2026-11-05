@@ -121,14 +121,21 @@ def call(method, path, body=None, token=None):
 
 
 def ensure_user(username, role):
-    status, users = call("GET", "/users")
+    """Requires SEED_TOKEN (a lecturer/admin JWT) once endpoint authorization is enabled."""
+    token = os.environ.get("SEED_TOKEN")
+    status, users = call("GET", "/users", token=token)
     if status != 200:
-        sys.exit(f"cannot list users ({status}): {users} - is the backend running on {BASE}?")
+        sys.exit(
+            f"cannot list users ({status}). Start the backend with authorization disabled, or\n"
+            "export SEED_TOKEN=<a lecturer/admin access token> and run again."
+        )
     for user in users:
         if user["username"] == username:
             print(f"  = user {username:<12} id={user['id']} ({user['role']})")
             return user["id"]
-    status, user = call("POST", "/users", {"username": username, "role": role, "passwordHash": PASSWORD})
+    status, user = call(
+        "POST", "/users", {"username": username, "role": role, "passwordHash": PASSWORD}, token
+    )
     if status not in (200, 201):
         sys.exit(f"cannot create user {username}: {status} {user}")
     print(f"  + user {username:<12} id={user['id']} ({user['role']})")
@@ -143,13 +150,15 @@ def login(username):
 
 
 def ensure_course(lecturer_id, token):
-    # Anonymous GET returns every course; looking only at the lecturer's own list
-    # would miss an existing CS201 owned by someone else and then fail on create.
-    status, courses = call("GET", "/courses")
+    # Authenticated listing shows the lecturer's own courses; fall back to the public
+    # listing when endpoint authorization is disabled for local development.
+    status, courses = call("GET", "/courses", token=token)
+    if status != 200:
+        status, courses = call("GET", "/courses")
     for course in courses or []:
         if course["code"] == COURSE["code"]:
             print(f"  = course {COURSE['code']} id={course['id']}")
-            call("POST", f"/courses/{course['id']}/members", {"userId": lecturer_id})
+            call("POST", f"/courses/{course['id']}/members", {"userId": lecturer_id}, token)
             return course["id"]
     status, course = call("POST", "/courses", {"userId": lecturer_id, **COURSE}, token)
     if status not in (200, 201):
@@ -221,7 +230,9 @@ def main():
 
     course_id = ensure_course(lecturer_id, lecturer_token)
     for username, user_id in student_ids.items():
-        status, members = call("POST", f"/courses/{course_id}/members", {"userId": user_id})
+        status, members = call(
+            "POST", f"/courses/{course_id}/members", {"userId": user_id}, lecturer_token
+        )
         if status in (200, 201):
             print(f"  + enrolled {username}")
         elif status == 409:

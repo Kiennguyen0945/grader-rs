@@ -16,6 +16,7 @@ import {
   Reset as ResetIcon,
   Send,
   SubPill,
+  TestPill,
   subStatusLabel,
   Terminal,
 } from '../components/SharedUI';
@@ -604,7 +605,7 @@ export function WorkspaceView({ assignmentId }: { assignmentId: number }) {
                           <span className="tm">
                             {r.executionTimeMs ?? '—'} ms · {Math.round((r.memoryUsedKib ?? 0) / 1024)} MB
                           </span>
-                          <SubPill status={r.status} />
+                          <TestPill status={r.status} />
                         </button>
                         {openTest === r.testId && (
                           <div className="rowdetail" style={{ padding: '0 8px 14px 40px' }}>

@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { apiRequest, getToken, setToken } from '../api';
+import { apiRequest, getToken, isTokenExpired, setToken } from '../api';
 import { isDemo } from '../dev/demo';
 import type { LoginResponse } from '../types';
 
@@ -36,6 +36,14 @@ function decodeToken(token: string): { userId: number | null; roles: string[] } 
 function readSession(): Session | null {
   const token = getToken();
   if (!token) return null;
+  // A stale token from a previous visit must not render a signed-in shell that 401s/403s.
+  if (isTokenExpired(token)) {
+    setToken(null);
+    try {
+      localStorage.removeItem(USERNAME_KEY);
+    } catch {}
+    return null;
+  }
   let username = '';
   try {
     username = localStorage.getItem(USERNAME_KEY) ?? '';

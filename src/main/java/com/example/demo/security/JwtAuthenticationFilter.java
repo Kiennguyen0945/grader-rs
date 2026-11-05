@@ -37,43 +37,56 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String header = request.getHeader("Authorization");
 
         if (header == null || !header.startsWith("Bearer ")) {
-            System.out.println("RESPONSE WITHOUT BEARER");
             filterChain.doFilter(request, response);
             return;
         }
 
         String token = header.substring(7);
-        String userId;
 
         try {
-            userId = jwtService.extractUserId(token);
-        } catch (Exception exception) {
-            filterChain.doFilter(request, response);
+            String userId = jwtService.extractUserId(token);
+
+            if (userId == null || SecurityContextHolder.getContext().getAuthentication() != null) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            CustomUserPrincipal user = userDetailsService.loadUserById(userId);
+
+            if (!jwtService.isValid(token, user) || !user.isEnabled()) {
+                unauthorized(response);
+                return;
+            }
+
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(
+                            user,
+                            null,
+                            user.getAuthorities()
+                    );
+
+            authentication.setDetails(
+                    new WebAuthenticationDetailsSource()
+                            .buildDetails(request)
+            );
+
+            SecurityContextHolder
+                    .getContext()
+                    .setAuthentication(authentication);
+        } catch (Exception expiredOrMalformed) {
+            // A malformed/expired token must not fall through as "anonymous": that surfaced as
+            // a confusing 403 on every screen. Tell the client to sign in again instead.
+            unauthorized(response);
             return;
         }
 
-        if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            CustomUserPrincipal user = userDetailsService.loadUserById(userId);
-
-            if (jwtService.isValid(token, user)) {
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                user,
-                                null,
-                                user.getAuthorities()
-                        );
-
-                authentication.setDetails(
-                        new WebAuthenticationDetailsSource()
-                                .buildDetails(request)
-                );
-
-                SecurityContextHolder
-                        .getContext()
-                        .setAuthentication(authentication);
-            }
-        }
-
         filterChain.doFilter(request, response);
+    }
+
+    private void unauthorized(HttpServletResponse response) throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json");
+        response.getWriter().write(
+                "{\"error\":\"unauthorized\",\"message\":\"Invalid or expired token.\"}");
     }
 }

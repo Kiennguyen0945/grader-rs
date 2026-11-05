@@ -5,10 +5,12 @@ import type {
   AssignmentDetail,
   AssignmentSummary,
   Course,
+  CourseMember,
   LeaderboardRow,
   NotificationItem,
   SubmissionDetail,
   SubmissionSummary,
+  TestCase,
 } from './types';
 
 /**
@@ -59,6 +61,58 @@ export const data = {
       method: 'POST',
       body: { sourceCode },
     });
+  },
+
+  /* ---------------------------------------------------------------------
+   * Lecturer ("teaching") gateway.
+   * `submissions()` above already returns every student's rows for a
+   * lecturer because the backend decides scope from the JWT; in demo mode
+   * the fixtures provide a multi-student queue instead.
+   * ------------------------------------------------------------------- */
+
+  async assignmentSubmissions(assignmentId: number): Promise<SubmissionSummary[]> {
+    if (isDemo()) return demo.demoReviewQueueFor(assignmentId);
+    return apiRequest<SubmissionSummary[]>(`/assignments/${assignmentId}/submissions`);
+  },
+
+  async members(courseId: number): Promise<CourseMember[]> {
+    if (isDemo()) return demo.demoMembers;
+    return apiRequest<CourseMember[]>(`/courses/${courseId}/members`);
+  },
+
+  async tests(assignmentId: number): Promise<TestCase[]> {
+    if (isDemo()) return demo.demoTestsFor(assignmentId);
+    return apiRequest<TestCase[]>(`/assignments/${assignmentId}/tests`);
+  },
+
+  async createTest(assignmentId: number, body: Partial<TestCase>): Promise<TestCase> {
+    if (isDemo()) return demo.demoCreateTest(assignmentId, body);
+    return apiRequest<TestCase>(`/assignments/${assignmentId}/tests`, { method: 'POST', body });
+  },
+
+  async updateTest(assignmentId: number, testId: number, body: Partial<TestCase>): Promise<TestCase> {
+    if (isDemo()) return demo.demoUpdateTest(assignmentId, testId, body);
+    return apiRequest<TestCase>(`/assignments/${assignmentId}/tests/${testId}`, { method: 'PATCH', body });
+  },
+
+  async deleteTest(assignmentId: number, testId: number): Promise<void> {
+    if (isDemo()) return demo.demoDeleteTest(assignmentId, testId);
+    await apiRequest(`/assignments/${assignmentId}/tests/${testId}`, { method: 'DELETE' });
+  },
+
+  async createAssignment(courseId: number, body: Record<string, unknown>): Promise<AssignmentSummary> {
+    if (isDemo()) return demo.demoCreateAssignment(courseId, body);
+    return apiRequest<AssignmentSummary>(`/courses/${courseId}/assignments`, { method: 'POST', body });
+  },
+
+  async updateAssignment(assignmentId: number, body: Record<string, unknown>): Promise<AssignmentSummary> {
+    if (isDemo()) return demo.demoUpdateAssignment(assignmentId, body);
+    return apiRequest<AssignmentSummary>(`/assignments/${assignmentId}`, { method: 'PATCH', body });
+  },
+
+  async deleteAssignment(assignmentId: number): Promise<void> {
+    if (isDemo()) return demo.demoDeleteAssignment(assignmentId);
+    await apiRequest(`/assignments/${assignmentId}`, { method: 'DELETE' });
   },
 
   async leaderboard(): Promise<LeaderboardRow[]> {

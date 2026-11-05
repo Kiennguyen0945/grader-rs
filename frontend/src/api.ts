@@ -18,6 +18,36 @@ export function setToken(token: string | null) {
   } catch {}
 }
 
+/** JWT `exp` in ms, or null when the token is opaque/malformed (demo builds). */
+function tokenExpiry(token: string): number | null {
+  try {
+    const payload = token.split('.')[1];
+    if (!payload) return null;
+    const json = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+    return typeof json.exp === 'number' ? json.exp * 1000 : null;
+  } catch {
+    return null;
+  }
+}
+
+function isExpired(token: string): boolean {
+  const expiry = tokenExpiry(token);
+  return expiry !== null && expiry <= Date.now();
+}
+
+/** Exposed so the auth provider can drop an expired token on page load. */
+export const isTokenExpired = isExpired;
+
+/** Clears the stored session and lets `AuthProvider` fall back to the login screen. */
+function endSession(message: string): never {
+  setToken(null);
+  try {
+    localStorage.removeItem('lamplight-username');
+  } catch {}
+  window.dispatchEvent(new Event('auth:unauthorized'));
+  throw new Error(message);
+}
+
 export interface ApiRequestOptions extends Omit<RequestInit, 'body'> {
   body?: any;
 }
@@ -28,6 +58,11 @@ export async function apiRequest<T = any>(path: string, options: ApiRequestOptio
   };
 
   const token = getToken();
+  // The backend answers 401 for expired tokens, but stopping here avoids a pointless
+  // round-trip and makes the redirect to the login screen instant.
+  if (token && isExpired(token)) {
+    endSession('Your session expired. Please sign in again.');
+  }
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
@@ -38,16 +73,21 @@ export async function apiRequest<T = any>(path: string, options: ApiRequestOptio
     body = JSON.stringify(body);
   }
 
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers,
-    body,
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers,
+      body,
+    });
+  } catch {
+    // Browser-level failure: the dev server / backend is down, DNS failed, offline, etc.
+    // Without this the login form shows the opaque "NetworkError when attempting to fetch".
+    throw new Error(`Cannot reach the API at ${API_BASE} — is the backend running?`);
+  }
 
   if (res.status === 401) {
-    setToken(null);
-    window.dispatchEvent(new Event('auth:unauthorized'));
-    throw new Error('Session expired. Please sign in again.');
+    endSession('Session expired. Please sign in again.');
   }
 
   const contentType = res.headers.get('content-type') || '';

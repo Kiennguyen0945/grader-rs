@@ -18,6 +18,9 @@ export type SubmissionStatus =
   | 'NOT_RUN'
   | 'OUTPUT_LIMIT_EXCEEDED';
 
+/** Per-test verdict from `submission_tests` — note `PASSED` instead of `ACCEPTED`. */
+export type TestStatus = SubmissionStatus | 'PASSED';
+
 export type ProgrammingLanguage = 'JAVA' | 'PYTHON' | string;
 
 /** `GET /api/courses` (Course entity). Only the flat fields are relied upon. */
@@ -47,6 +50,9 @@ export interface AssignmentSummary {
   allowedLanguages?: ProgrammingLanguage[];
   /** joined client-side from the course list */
   courseCode?: string;
+  /** aggregates added by AssignmentResponseDto */
+  testCount?: number;
+  submissionCount?: number;
   /** demo-mode only */
   timeLimitMs?: number;
   memoryLimitKib?: number;
@@ -70,19 +76,20 @@ export interface SubmissionSummary {
   submissionId: number;
   assignmentId: number;
   userId: number;
+  username?: string;
   sourceCode: string;
   status: SubmissionStatus;
   grade?: number | null;
   attemptNumber: number;
-  /** demo-mode only (the Submission entity has no timestamp) */
-  submittedAt?: string;
+  /** earliest grading run for this submission (backend derives it) */
+  submittedAt?: string | null;
 }
 
 export interface SubmissionTestResult {
   testId: number;
   testName?: string | null;
   displayOrder: number;
-  status: SubmissionStatus;
+  status: TestStatus;
   input?: string | null;
   expectedOutput: string;
   actualOutput?: string | null;
@@ -94,7 +101,28 @@ export interface SubmissionTestResult {
 export interface SubmissionDetail extends SubmissionSummary {
   passedTests: number;
   totalTests: number;
+  /** public tests only (safe for students) */
   sampleTestResults: SubmissionTestResult[];
+  /** every test — populated for lecturers only */
+  testResults?: SubmissionTestResult[];
+}
+
+/** `GET /api/assignments/{assignmentId}/tests` — TestResponseDto */
+export interface TestCase {
+  testId: number;
+  name?: string | null;
+  input?: string | null;
+  expectedOutput: string;
+  isPublic: boolean;
+  displayOrder: number;
+  timeLimitMs?: number | null;
+  memoryLimitKib?: number | null;
+}
+
+export interface TestStats {
+  total: number;
+  publicCount: number;
+  privateCount: number;
 }
 
 /** `POST /api/auth/login` */
@@ -108,6 +136,13 @@ export interface User {
   username: string;
   role: 'ADMIN' | 'LECTURER' | 'STUDENT';
   status?: string;
+}
+
+/** `GET /api/courses/{courseId}/members` — MemberResponseDto */
+export interface CourseMember {
+  id: number;
+  username: string;
+  role: User['role'];
 }
 
 export interface LeaderboardRow {

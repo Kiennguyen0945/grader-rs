@@ -5,10 +5,11 @@ import { useSetCrumb } from '../state/crumb';
 import { data } from '../data';
 import { navigate } from '../router';
 
-export function CoursesView() {
+export function CoursesView({ variant = 'student' }: { variant?: 'student' | 'lecturer' }) {
   const { loading, error, courses, assignments, reload } = useOverview();
   const [query, setQuery] = useState('');
-  useSetCrumb(['Home'], 'My courses');
+  const isLecturer = variant === 'lecturer';
+  useSetCrumb(['Teaching'], isLecturer ? 'Courses' : 'My courses');
 
   const rows = useMemo(() => {
     const now = Date.now();
@@ -26,6 +27,9 @@ export function CoursesView() {
       });
   }, [courses, assignments, query]);
 
+  const draftsFor = (courseId: number) =>
+    assignments.filter((a) => a.courseId === courseId && a.assignmentStatus === 'DRAFT').length;
+
   if (loading) {
     return (
       <section className="screen on" id="scr-courses">
@@ -38,9 +42,11 @@ export function CoursesView() {
 
   return (
     <section className="screen on" id="scr-courses">
-      <span className="kicker">enrolled · {courses.length}</span>
+      <span className="kicker">
+        {isLecturer ? `teaching · ${courses.length}` : `enrolled · ${courses.length}`}
+      </span>
       <h1 className="pagetitle" style={{ margin: '6px 0 18px' }}>
-        My courses
+        {isLecturer ? 'Courses I teach' : 'My courses'}
       </h1>
 
       <div className="toolbar">
@@ -80,7 +86,7 @@ export function CoursesView() {
           rows.map(({ course, total, open }) => {
             const next = open[0];
             return (
-              <div className="coursecard" key={course.id} data-id={course.code} onClick={() => navigate(`/courses/${course.id}`)}>
+              <div className="coursecard" key={course.id} data-id={course.code} onClick={() => navigate(isLecturer ? `/teach/courses/${course.id}` : `/courses/${course.id}`)}>
                 <div className="cc-top">
                   <span className="chip">{course.code}</span>
                   {course.term && <span className="cc-term">{course.term}</span>}
@@ -98,10 +104,12 @@ export function CoursesView() {
                       {open.length} due · {next.code.toLowerCase()}
                     </span>
                   ) : (
-                    <span className="dim small">no open assignments</span>
+                    <span className="dim small">
+                      {isLecturer ? `${draftsFor(course.id)} drafts` : 'no open assignments'}
+                    </span>
                   )}
                   <span className="spacer" style={{ marginLeft: 'auto' }} />
-                  <span className="btn btn-sec btn-sm">Open course</span>
+                  <span className="btn btn-sec btn-sm">{isLecturer ? 'Manage' : 'Open course'}</span>
                 </div>
               </div>
             );

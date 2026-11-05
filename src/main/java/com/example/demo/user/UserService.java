@@ -1,6 +1,8 @@
 package com.example.demo.user;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 
 @Service
@@ -18,7 +20,8 @@ public class UserService {
         String password
     ) {
         if (userRepository.existsByUsername(username)) {
-            throw new IllegalArgumentException(
+            throw new ResponseStatusException(
+                HttpStatus.CONFLICT,
                 "Username already exists"
             );
         }

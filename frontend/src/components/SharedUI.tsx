@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import type { AssignmentStatus, SubmissionStatus } from '../types';
+import type { AssignmentStatus, SubmissionStatus, TestStatus } from '../types';
 
 /* ---------------------------------------------------------------------------
  * Icons — copied from the prototype markup (same paths, same stroke widths)
@@ -219,6 +219,19 @@ export function SubPill({ status }: { status: SubmissionStatus }) {
       {subStatusLabel(status)}
     </span>
   );
+}
+
+/** Per-test verdict pill: `PASSED` reads as "passed", everything else reuses the submission map. */
+export function TestPill({ status }: { status: TestStatus }) {
+  if (status === 'PASSED') {
+    return (
+      <span className="pill st-ok">
+        <span className="dot" />
+        passed
+      </span>
+    );
+  }
+  return <SubPill status={status} />;
 }
 
 export const isTerminal = (status: SubmissionStatus) => status !== 'QUEUED' && status !== 'RUNNING';

@@ -43,10 +43,22 @@ public class SecurityConfig {
                             SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                     .requestMatchers("/api/auth/**").permitAll()
-                    // Demo mode: endpoint authorization temporarily disabled.
-                    // /error must stay permitted, otherwise the container's error dispatch is
-                    // itself rejected and every 4xx/5xx is rewritten to an empty 403.
-                    .requestMatchers("/api/**", "/error").permitAll()
+                    // The container's error dispatch must stay public, otherwise every 4xx/5xx
+                    // is rewritten to an empty 403 before the client can read the message.
+                    .requestMatchers("/error").permitAll()
+                    // User management: admins manage accounts, lecturers onboard their students.
+                    .requestMatchers(HttpMethod.POST, "/api/users").hasAnyRole("ADMIN", "LECTURER")
+                    // Course + enrolment management.
+                    .requestMatchers(HttpMethod.POST, "/api/courses").hasAnyRole("ADMIN", "LECTURER")
+                    .requestMatchers(HttpMethod.POST, "/api/courses/*/members").hasAnyRole("ADMIN", "LECTURER")
+                    .requestMatchers(HttpMethod.PATCH, "/api/courses/**").hasAnyRole("ADMIN", "LECTURER")
+                    .requestMatchers(HttpMethod.DELETE, "/api/courses/**").hasAnyRole("ADMIN", "LECTURER")
+                    // Assignment authoring.
+                    .requestMatchers(HttpMethod.POST, "/api/courses/*/assignments").hasAnyRole("ADMIN", "LECTURER")
+                    .requestMatchers(HttpMethod.PATCH, "/api/assignments/**").hasAnyRole("ADMIN", "LECTURER")
+                    .requestMatchers(HttpMethod.DELETE, "/api/assignments/**").hasAnyRole("ADMIN", "LECTURER")
+                    // Test cases carry hidden grading inputs, so even reads are lecturer-only.
+                    .requestMatchers("/api/assignments/*/tests/**").hasAnyRole("ADMIN", "LECTURER")
                     .anyRequest().authenticated())
             .addFilterBefore(
                     jwtAuthenticationFilter,

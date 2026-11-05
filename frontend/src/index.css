@@ -380,3 +380,12 @@ tr.lb-you td:first-child{box-shadow:inset 3px 0 0 var(--amber)}
 .lb-scorecell{font-family:var(--mono);font-weight:700;font-size:15px}
 tr.lb-top1 .lb-scorecell{color:var(--accent-text)}
 @media (max-width:1100px){.podiumrow{flex-direction:column}.podium.p1{order:-1}}
+/* ---------- LECTURER SCREENS (dashboard / editor / tests / review queue) ---------- */
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.rowactions{display:inline-flex;gap:2px;justify-content:flex-end;align-items:center;flex-wrap:nowrap}
+.submitgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.st-rte{color:var(--rte)} .st-sys{color:var(--sys)}
+.tbl tr.clickable:hover{background:var(--panel-2)}
+.codebox pre{max-height:640px}
+@media (max-width:1100px){.grid3{grid-template-columns:1fr}.submitgrid{grid-template-columns:1fr}}
+
