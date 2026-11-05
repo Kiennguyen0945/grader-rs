@@ -45,4 +45,16 @@ public class CourseUser {
         this.user = user;
     }
 
+    public Long getId() {
+        return id;
+    }
+
+    public Course getCourse() {
+        return course;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
 }

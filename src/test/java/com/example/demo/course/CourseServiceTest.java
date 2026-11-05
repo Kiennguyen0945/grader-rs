@@ -26,6 +26,9 @@ class CourseServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private com.example.demo.courseUser.CourseUserRepository courseUserRepository;
+
     @InjectMocks
     private CourseService courseService;
 

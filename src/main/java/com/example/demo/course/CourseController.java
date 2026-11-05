@@ -25,13 +25,26 @@ public class CourseController {
         if (principal == null) {
             return courseService.getAllCourses();
         }
-        boolean isLecturer = principal.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_" + User.Role.LECTURER.name()));
+        boolean isLecturer = principal.hasRole(User.Role.LECTURER);
         return courseService.getCoursesForUser(principal.getId(), isLecturer);
     }
     @GetMapping("/{id}")
     public CourseService.CourseResponseDto getCourseById(@PathVariable Long id) {
         return courseService.getCourseById(id); 
+    }
+
+    /** Everyone linked to the course: the lecturer plus enrolled students. */
+    @GetMapping("/{id}/members")
+    public List<CourseService.MemberResponseDto> getCourseMembers(@PathVariable Long id) {
+        return courseService.getMembers(id);
+    }
+
+    /** Adds a student to the course; returns the updated member list. */
+    @PostMapping("/{id}/members")
+    public List<CourseService.MemberResponseDto> addCourseMember(
+            @PathVariable Long id,
+            @RequestBody AddMemberRequest request) {
+        return courseService.enrollUser(id, request.userId());
     }
 
     @DeleteMapping("/{id}")
@@ -60,6 +73,8 @@ public class CourseController {
     public record CreateCourseRequest (@NotNull Long userId, @NotBlank String code, @NotBlank String courseName, String description) {
     }
     public record UpdateCourseRequest (String courseName, String description){
+    }
+    public record AddMemberRequest (@NotNull Long userId) {
     }
 }
 

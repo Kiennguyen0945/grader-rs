@@ -21,7 +21,9 @@ import jakarta.transaction.Transactional;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 import org.slf4j.Logger;
@@ -132,28 +134,43 @@ public class SubmissionService {
         log.info("Producer sent: savedSubmissionId={}, savedGradingRunId={}",
                 savedSubmission.getId(), savedGradingRun.getId());
         return SubmissionResponseDto.fromEntity(
-            savedSubmission
+            savedSubmission, savedGradingRun.getCreatedAt()
         );
     }
 
-    public List<SubmissionResponseDto> getSubmissionsByAssignmentIdAndUserId(
+    public List<SubmissionResponseDto> getSubmissionsByAssignmentId(
         Long assignmentId,
-        Long userId
+        Long userId,
+        boolean isLecturer
     ) {
-        return submissionRepository.findByAssignmentIdAndUserId(
-            assignmentId,
-            userId
-        )
-        .stream()
-        .map(SubmissionResponseDto::fromEntity)
-        .toList();
+        List<Submission> submissions = isLecturer
+            ? submissionRepository.findByAssignmentIdOrderByIdDesc(assignmentId)
+            : submissionRepository.findByAssignmentIdAndUserId(assignmentId, userId);
+
+        // Submission has no timestamp of its own; the first grading run created for it
+        // marks when the code was received.
+        Map<Long, LocalDateTime> submittedAt = new HashMap<>();
+        for (GradingRun run : gradingRunRepository.findBySubmission_Assignment_Id(assignmentId)) {
+            LocalDateTime createdAt = run.getCreatedAt();
+            if (createdAt == null) {
+                continue;
+            }
+            submittedAt.merge(run.getSubmission().getId(), createdAt,
+                (existing, candidate) -> candidate.isBefore(existing) ? candidate : existing);
+        }
+
+        return submissions
+            .stream()
+            .map(submission -> SubmissionResponseDto.fromEntity(
+                submission, submittedAt.get(submission.getId())))
+            .toList();
     }
 
     public SubmissionDetailResponseDto getSubmissionDetail(Long submissionId, Long userId, boolean isLecturer) {
         Submission submission = submissionRepository.findById(submissionId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Submission Not Found."));
 
-        if (!isLecturer && !submission.getUser().getId().equals(userId)) {
+        if (!isLecturer && userId != null && !submission.getUser().getId().equals(userId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to submission.");
         }
 
@@ -163,7 +180,7 @@ public class SubmissionService {
             ? submissionTestRepository.findByGradingRun_Submission_IdAndGradingRun_Id(submissionId, latestGradingRunId)
             : List.of();
 
-        int totalTests = testRepository.countByAssignmentId(submission.getAssignment().getId());
+        int totalTests = (int) testRepository.countByAssignmentId(submission.getAssignment().getId());
         int passedTests = 0;
         for (SubmissionTest st : runTests) {
             if (st.getStatus() == SubmissionTest.Status.PASSED) {
@@ -171,22 +188,35 @@ public class SubmissionService {
             }
         }
 
+        List<SubmissionTestResultDto> testResults = runTests.stream()
+            .filter(st -> isLecturer || st.getTest().isPublic())
+            .map(SubmissionTestResultDto::fromEntity)
+            .toList();
+
+        // Students only ever see the public sample tests; lecturers get the full run.
         List<SubmissionTestResultDto> sampleTestResults = runTests.stream()
             .filter(st -> st.getTest().isPublic())
             .map(SubmissionTestResultDto::fromEntity)
             .toList();
 
+        LocalDateTime submittedAt = latestGradingRunId != null
+            ? gradingRunRepository.findById(latestGradingRunId).map(GradingRun::getCreatedAt).orElse(null)
+            : null;
+
         return new SubmissionDetailResponseDto(
             submission.getId(),
             submission.getAssignment().getId(),
             submission.getUser().getId(),
+            submission.getUser().getUsername(),
             submission.getSourceCode(),
             submission.getStatus(),
             submission.getGrade(),
             submission.getAttemptNumber(),
+            submittedAt,
             passedTests,
             totalTests,
-            sampleTestResults
+            sampleTestResults,
+            testResults
         );
     }
 
@@ -221,13 +251,16 @@ public class SubmissionService {
         Long submissionId,
         Long assignmentId,
         Long userId,
+        String username,
         String sourceCode,
         Submission.Status status,
         Double grade,
         Integer attemptNumber,
+        LocalDateTime submittedAt,
         int passedTests,
         int totalTests,
-        List<SubmissionTestResultDto> sampleTestResults
+        List<SubmissionTestResultDto> sampleTestResults,
+        List<SubmissionTestResultDto> testResults
     ) {}
 
     public record SubmissionGradingMessage(Long submissionId, Long gradingRunId) {
@@ -237,20 +270,24 @@ public class SubmissionService {
         Long submissionId, 
         Long assignmentId, 
         Long userId,
+        String username,
         String sourceCode, 
         Submission.Status status,
         Double grade,
-        Integer attemptNumber
+        Integer attemptNumber,
+        LocalDateTime submittedAt
     ) {
-        public static SubmissionResponseDto fromEntity(Submission submission) {
+        public static SubmissionResponseDto fromEntity(Submission submission, LocalDateTime submittedAt) {
             return new SubmissionResponseDto(
                 submission.getId(),
                 submission.getAssignment().getId(),
                 submission.getUser().getId(),
+                submission.getUser().getUsername(),
                 submission.getSourceCode(),
                 submission.getStatus(),
                 submission.getGrade(),
-                submission.getAttemptNumber()
+                submission.getAttemptNumber(),
+                submittedAt
             );
         }
     }

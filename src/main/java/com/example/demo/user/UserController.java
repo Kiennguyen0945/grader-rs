@@ -13,18 +13,28 @@ public class UserController {
         this.userService = userService;
     }
 
+    /**
+     * Slim projection: never serialize the JPA entity (it pulls in assignments,
+     * submissions, course memberships and grading runs -> huge, lazily-loaded JSON).
+     */
     @GetMapping
-    public List<User> getUsers() {
-        return userService.getAllUsers();
+    public List<UserSummary> getUsers() {
+        return userService.getAllUsers().stream().map(UserSummary::fromEntity).toList();
     }
 
     @PostMapping
-    public User createUser(@RequestBody CreateUserRequest request) {
-        return userService.createUser(
+    public UserSummary createUser(@RequestBody CreateUserRequest request) {
+        return UserSummary.fromEntity(userService.createUser(
             request.username(),
             request.role(),
             request.passwordHash()
-        );
+        ));
+    }
+
+    public record UserSummary(Long id, String username, User.Role role, User.Status status) {
+        public static UserSummary fromEntity(User user) {
+            return new UserSummary(user.getId(), user.getUsername(), user.getRole(), user.getStatus());
+        }
     }
 
     public record CreateUserRequest(

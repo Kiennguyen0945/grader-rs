@@ -43,7 +43,6 @@ public class GradingService {
     private final SubmissionTestRepository submissionTestRepository;
     private final SubmissionRepository submissionRepository;
     private final GradingRunRepository gradingRunRepository;
-    private final KubernetesJobService kubernetesJobService;
     public GradingService(
             AssignmentRepository assignmentRepository, 
             SubmissionTestRepository submissionTestRepository, 
@@ -54,7 +53,6 @@ public class GradingService {
         this.submissionTestRepository = submissionTestRepository;
         this.submissionRepository = submissionRepository;
         this.gradingRunRepository = gradingRunRepository;
-        this.kubernetesJobService = kubernetesJobService;
     }
    public void grade(Submission submission, GradingRun gradingRun) throws IOException {
         if (gradingRun.getStatus() != GradingRun.Status.QUEUED) {
@@ -64,7 +62,6 @@ public class GradingService {
         validateAssignment(assignment, submission);
         Path tempDir = Files.createTempDirectory("runner-");
         System.out.println("Grading Worker Reached");
-        kubernetesJobService.createTestJob(submission.getId(), gradingRun.getId());
         try {
             Path mainJava = tempDir.resolve("Main.java");
             Files.writeString(mainJava, submission.getSourceCode());

@@ -26,8 +26,7 @@ public class AssignmentResourceController {
     public AssignmentService.AssignmentDetailResponseDto fetchSingleAssignment(
             @PathVariable Long assignmentId,
             @AuthenticationPrincipal CustomUserPrincipal principal) {
-        boolean isLecturer = principal != null && principal.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_" + User.Role.LECTURER.name()));
+        boolean isLecturer = principal != null && principal.hasRole(User.Role.LECTURER);
         Long userId = principal != null ? principal.getId() : null;
         return assignmentService.fetchAssignmentWorkspaceDetail(assignmentId, userId, isLecturer);
     }

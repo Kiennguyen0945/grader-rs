@@ -28,8 +28,7 @@ public class AssignmentController {
     public List<AssignmentService.AssignmentResponseDto> getAssignmentsByCourseId(
             @PathVariable Long courseId,
             @AuthenticationPrincipal CustomUserPrincipal principal) {
-        boolean isLecturer = principal != null && principal.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_" + User.Role.LECTURER.name()));
+        boolean isLecturer = principal != null && principal.hasRole(User.Role.LECTURER);
         Long userId = principal != null ? principal.getId() : null;
         return assignmentService.getAssignmentsForCourse(courseId, userId, isLecturer);
     }

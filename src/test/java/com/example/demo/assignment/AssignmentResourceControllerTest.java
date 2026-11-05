@@ -74,7 +74,9 @@ public class AssignmentResourceControllerTest {
                 null,
                 null,
                 null,
-                null
+                null,
+                0,
+                0L
             );
         when(assignmentService.partialUpdateAssignment(eq(assignmentId), eq("B001"), anyString(), eq(Assignment.AssignmentStatus.DRAFT), any(), any(), any(), any(), any()))
         .thenReturn(assignmentResponseDto);
@@ -154,7 +156,9 @@ public class AssignmentResourceControllerTest {
                 5,
                 null,
                 null,
-                java.util.Set.of(Assignment.ProgrammingLanguage.JAVA)
+                java.util.Set.of(Assignment.ProgrammingLanguage.JAVA),
+                0,
+                0L
             );
 
         when(assignmentService.partialUpdateAssignment(

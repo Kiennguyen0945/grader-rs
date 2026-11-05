@@ -5,6 +5,7 @@ import com.example.demo.assignment.Assignment.ProgrammingLanguage;
 import com.example.demo.course.Course;
 import com.example.demo.course.CourseRepository;
 import com.example.demo.courseUser.CourseUserRepository;
+import com.example.demo.submission.SubmissionRepository;
 import com.example.demo.test.Test;
 import com.example.demo.test.TestRepository;
 import com.example.demo.user.User;
@@ -27,18 +28,21 @@ public class AssignmentService {
     private final CourseUserRepository courseUserRepository;
     private final UserRepository userRepository;
     private final TestRepository testRepository;
+    private final SubmissionRepository submissionRepository;
 
     public AssignmentService(
             AssignmentRepository assignmentRepository,
             CourseRepository courseRepository,
             CourseUserRepository courseUserRepository,
             UserRepository userRepository,
-            TestRepository testRepository) {
+            TestRepository testRepository,
+            SubmissionRepository submissionRepository) {
         this.assignmentRepository = assignmentRepository;
         this.courseRepository = courseRepository;
         this.courseUserRepository = courseUserRepository;
         this.userRepository = userRepository;
         this.testRepository = testRepository;
+        this.submissionRepository = submissionRepository;
     }
 
     @Transactional
@@ -76,13 +80,13 @@ public class AssignmentService {
             closingTime,
             allowedLanguages
         );
-        return AssignmentResponseDto.fromEntity(assignmentRepository.save(assignment));
+        return toDto(assignmentRepository.save(assignment));
     }
 
     public List<AssignmentResponseDto> getAssignmentsByCourseIdAndUserId(Long courseId, Long userId) {
         return assignmentRepository.findByCourseIdAndUserId(courseId, userId)
                 .stream()
-                .map(AssignmentResponseDto::fromEntity)
+                .map(this::toDto)
                 .toList();
     }
 
@@ -98,20 +102,28 @@ public class AssignmentService {
             }
             return assignmentRepository.findByCourseIdAndAssignmentStatus(courseId, AssignmentStatus.PUBLISHED)
                     .stream()
-                    .map(AssignmentResponseDto::fromEntity)
+                    .map(this::toDto)
                     .toList();
         }
 
         return assignmentRepository.findByCourseId(courseId)
                 .stream()
-                .map(AssignmentResponseDto::fromEntity)
+                .map(this::toDto)
                 .toList();
     }
 
     public AssignmentResponseDto fetchSingleAssignment(Long id) {
         return assignmentRepository.findById(id)
-                .map(AssignmentResponseDto::fromEntity)
+                .map(this::toDto)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assignment Not Found."));
+    }
+
+    /** Adds the two aggregates the lecturer course page and dashboard show as columns. */
+    private AssignmentResponseDto toDto(Assignment assignment) {
+        return AssignmentResponseDto.fromEntity(
+                assignment,
+                (int) testRepository.countByAssignmentId(assignment.getId()),
+                submissionRepository.countByAssignmentId(assignment.getId()));
     }
 
     public AssignmentDetailResponseDto fetchAssignmentWorkspaceDetail(Long id, Long userId, boolean isLecturer) {
@@ -203,7 +215,7 @@ public class AssignmentService {
 
             assignment.updateSchedule(newOpeningTime, newClosingTime);
         }
-        return AssignmentResponseDto.fromEntity(
+        return toDto(
                 assignmentRepository.save(assignment)
         );
     }
@@ -282,9 +294,11 @@ public class AssignmentService {
         Integer submissionLimit,
         LocalDateTime openingTime,
         LocalDateTime closingTime,
-        Set<ProgrammingLanguage> allowedLanguages
+        Set<ProgrammingLanguage> allowedLanguages,
+        int testCount,
+        long submissionCount
     ) {
-        public static AssignmentResponseDto fromEntity(Assignment assignment) {
+        public static AssignmentResponseDto fromEntity(Assignment assignment, int testCount, long submissionCount) {
             if (assignment == null) {
                 return null;
             }
@@ -300,7 +314,9 @@ public class AssignmentService {
                     assignment.getSubmissionLimit(),
                     assignment.getOpeningTime(),
                     assignment.getClosingTime(),
-                    assignment.getAllowedLanguages() != null ? Set.copyOf(assignment.getAllowedLanguages()) : Set.of()
+                    assignment.getAllowedLanguages() != null ? Set.copyOf(assignment.getAllowedLanguages()) : Set.of(),
+                    testCount,
+                    submissionCount
             );
         }
     }

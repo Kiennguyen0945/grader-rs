@@ -44,7 +44,9 @@ public class AssignmentControllerTest {
                 null,
                 null,
                 null,
-                null
+                null,
+                0,
+                0L
             );
         when(assignmentService.getAssignmentsForCourse(eq(courseId), any(), any(Boolean.class)))
                 .thenReturn(List.of(assignmentResponseDto));
@@ -85,7 +87,9 @@ public class AssignmentControllerTest {
                 null,
                 null,
                 null,
-                null
+                null,
+                0,
+                0L
             );
 
         when(assignmentService.createAssignment(

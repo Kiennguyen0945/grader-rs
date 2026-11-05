@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.example.demo.user.CustomUserPrincipal;
 import com.example.demo.user.User;
@@ -36,6 +38,9 @@ public class SubmissionController {
             @AuthenticationPrincipal CustomUserPrincipal principal,
             @Valid @RequestBody CreateSubmissionRequest request
     ) {
+        if (principal == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required.");
+        }
         log.info("POST reached: assignmentId={}, userId={}, authorities={}",
                 assignmentId,
                 principal.getId(),
@@ -52,10 +57,12 @@ public class SubmissionController {
             @PathVariable Long assignmentId,
             @AuthenticationPrincipal CustomUserPrincipal principal
     ) {
-        
-        return submissionService.getSubmissionsByAssignmentIdAndUserId(
+        boolean isLecturer = principal != null && principal.hasRole(User.Role.LECTURER);
+        Long userId = principal != null ? principal.getId() : null;
+        return submissionService.getSubmissionsByAssignmentId(
             assignmentId,
-            principal.getId()
+            userId,
+            isLecturer
         );
     }
 
@@ -64,8 +71,7 @@ public class SubmissionController {
             @PathVariable Long submissionId,
             @AuthenticationPrincipal CustomUserPrincipal principal
     ) {
-        boolean isLecturer = principal != null && principal.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_" + User.Role.LECTURER.name()));
+        boolean isLecturer = principal != null && principal.hasRole(User.Role.LECTURER);
         Long userId = principal != null ? principal.getId() : null;
         return submissionService.getSubmissionDetail(submissionId, userId, isLecturer);
     }

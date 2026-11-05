@@ -43,16 +43,10 @@ public class SecurityConfig {
                             SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                     .requestMatchers("/api/auth/**").permitAll()
-                    // Course mutations restricted to LECTURER
-                    .requestMatchers(HttpMethod.POST, "/api/courses").hasRole("LECTURER")
-                    .requestMatchers(HttpMethod.PATCH, "/api/courses/**").hasRole("LECTURER")
-                    .requestMatchers(HttpMethod.DELETE, "/api/courses/**").hasRole("LECTURER")
-                    // Assignment mutations restricted to LECTURER
-                    .requestMatchers(HttpMethod.POST, "/api/courses/*/assignments").hasRole("LECTURER")
-                    .requestMatchers(HttpMethod.PATCH, "/api/assignments/**").hasRole("LECTURER")
-                    .requestMatchers(HttpMethod.DELETE, "/api/assignments/**").hasRole("LECTURER")
-                    // Test case management restricted to LECTURER
-                    .requestMatchers("/api/assignments/*/tests/**").hasRole("LECTURER")
+                    // Demo mode: endpoint authorization temporarily disabled.
+                    // /error must stay permitted, otherwise the container's error dispatch is
+                    // itself rejected and every 4xx/5xx is rewritten to an empty 403.
+                    .requestMatchers("/api/**", "/error").permitAll()
                     .anyRequest().authenticated())
             .addFilterBefore(
                     jwtAuthenticationFilter,

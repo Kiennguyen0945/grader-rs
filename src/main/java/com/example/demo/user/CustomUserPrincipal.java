@@ -31,6 +31,12 @@ public class CustomUserPrincipal
         return id;
     }
 
+    /** True when this principal carries the given application role (e.g. LECTURER). */
+    public boolean hasRole(User.Role role) {
+        String authority = "ROLE_" + role.name();
+        return authorities.stream().anyMatch(a -> a.getAuthority().equals(authority));
+    }
+
     @Override
     public String getUsername() {
         return username;
