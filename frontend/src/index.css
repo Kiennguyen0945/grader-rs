@@ -1,4 +1,5 @@
 :root{
+  color-scheme:dark;
   --bg:#241C22; --bg-deep:#1E1720; --bg-well:#1A141B;
   --panel:#2E242B; --panel-2:#372B34; --panel-3:#40323C;
   --line:#43363F; --line-soft:#392D36;
@@ -24,6 +25,7 @@
   --mono:'JetBrains Mono',ui-monospace,'SF Mono',monospace;
 }
 [data-theme="light"]{
+  color-scheme:light;
   --bg:#F6EEE3; --bg-deep:#F0E6D8; --bg-well:#F2E8DA;
   --panel:#FCF8F1; --panel-2:#F5ECDF; --panel-3:#EDE1CF;
   --line:#E3D5C6; --line-soft:#EADFD1;
@@ -104,8 +106,15 @@ h2.cardtitle{font-family:var(--disp);font-weight:650;font-size:17px;letter-spaci
 /* ---------- FORMS ---------- */
 .field{margin-bottom:14px}
 .field label{display:block;font-size:12.5px;font-weight:600;color:var(--mut);margin-bottom:6px;letter-spacing:.02em}
-.field input[type=text],.field input[type=password],.field select,.field textarea{width:100%;background:var(--bg-well);border:1px solid var(--line);border-radius:8px;padding:9px 12px;color:var(--ink);transition:border-color .15s, box-shadow .15s}
+.field input:not([type=checkbox]):not([type=radio]),.field select,.field textarea{width:100%;background:var(--bg-well);border:1px solid var(--line);border-radius:8px;padding:9px 12px;color:var(--ink);transition:border-color .15s, box-shadow .15s}
+.field input:not([type=checkbox]):not([type=radio]):hover:not(:disabled),.field select:hover:not(:disabled),.field textarea:hover:not(:disabled){border-color:var(--dim)}
+.field input:disabled,.field select:disabled,.field textarea:disabled{opacity:.6;cursor:not-allowed}
+.field input[type=datetime-local]::-webkit-calendar-picker-indicator{opacity:.55;cursor:pointer;transition:opacity .15s}
+.field input[type=datetime-local]::-webkit-calendar-picker-indicator:hover{opacity:1}
+.field input[type=number]::-webkit-inner-spin-button{opacity:.55}
+.field input[type=number]:hover::-webkit-inner-spin-button,.field input[type=number]:focus::-webkit-inner-spin-button{opacity:1}
 .field input:focus,.field select:focus{outline:none;border-color:var(--amber);box-shadow:0 0 0 3px color-mix(in srgb, var(--amber) 18%, transparent)}
+input[type=checkbox],input[type=radio]{accent-color:var(--amber)}
 .input-wrap{position:relative}
 .input-wrap .eye{position:absolute;right:8px;top:50%;transform:translateY(-50%);color:var(--dim);padding:4px}
 .input-wrap .eye:hover{color:var(--ink)}
