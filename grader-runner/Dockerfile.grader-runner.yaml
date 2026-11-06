@@ -1,0 +1,13 @@
+FROM eclipse-temurin:21-jdk
+
+WORKDIR /app
+
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends maven \
+	&& rm -rf /var/lib/apt/lists/*
+
+COPY pom.xml ./
+
+COPY src src
+
+CMD ["mvn", "clean", "compile", "exec:java", "-Dexec.mainClass=com.example.runner.Main"]
