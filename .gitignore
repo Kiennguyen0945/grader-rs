@@ -42,3 +42,9 @@ frontend/dist/
 frontend/tsconfig.tsbuildinfo
 
 kubectl*
+
+### Biến môi trường (không commit) ###
+.env
+
+### Tài liệu cá nhân (CV, ghi chú phỏng vấn) ###
+docs/cv/
