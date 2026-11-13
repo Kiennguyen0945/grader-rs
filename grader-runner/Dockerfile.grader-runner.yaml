@@ -1,13 +1,24 @@
-FROM eclipse-temurin:21-jdk
+# --- Stage 1: Build Stage ---
+FROM maven:3.9.6-eclipse-temurin-21 AS builder
 
 WORKDIR /app
 
-RUN apt-get update \
-	&& apt-get install -y --no-install-recommends maven \
-	&& rm -rf /var/lib/apt/lists/*
+# Cache dependencies first
+COPY pom.xml .
+RUN mvn dependency:go-offline
 
-COPY pom.xml ./
+# Copy source and build executable JAR
+COPY src ./src
+RUN mvn package -DskipTests
 
-COPY src src
+# --- Stage 2: Final Runtime Stage ---
+FROM eclipse-temurin:21-jdk-alpine
 
-CMD ["mvn", "clean", "compile", "exec:java", "-Dexec.mainClass=com.example.runner.Main"]
+RUN apk add --no-cache time
+
+WORKDIR /app
+
+# Copy only the compiled JAR from the builder stage
+COPY --from=builder /app/target/*.jar app.jar
+
+CMD ["java", "-jar", "app.jar"]

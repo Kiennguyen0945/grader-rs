@@ -16,6 +16,7 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestReporter;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
@@ -32,6 +33,7 @@ import com.example.grader_worker.submission.Submission;
 import com.example.grader_worker.submission.SubmissionRepository;
 import com.example.grader_worker.submissiontest.SubmissionTest;
 import com.example.grader_worker.submissiontest.SubmissionTestRepository;
+import com.example.grader_worker.test.TestRepository;
 
 /**
  * These are integration-style tests: they run the real javac and java
@@ -168,6 +170,8 @@ class SubmissionTestTest {
     @Mock
     private KubernetesJobService kubernetesJobService;
 
+    @Mock
+    private TestRepository testRepository;
 
     private GradingService gradingService;
     private Assignment assignment;
@@ -184,6 +188,7 @@ class SubmissionTestTest {
             submissionTestRepository,
             submissionRepository,
             gradingRunRepository,
+            testRepository,
             kubernetesJobService
         );
 

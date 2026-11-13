@@ -101,7 +101,6 @@ private final ExecutorService executor = Executors.newCachedThreadPool();
             
                 gradingRunStatus = "FAILED";
                 finishedAt = LocalDateTime.now();
-             
 
                 Thread.currentThread().interrupt();
                 submissionResponse = updateSubmission(submissionResponse, submissionStatus, submissionGrade);
@@ -172,8 +171,6 @@ private final ExecutorService executor = Executors.newCachedThreadPool();
                             )
                         );
                         continue;
-                    } finally {
-                        Files.deleteIfExists(memoryFile);
                     }
                     int runExitCode = runProcess.exitValue();
                     if(runExitCode != 0) {
@@ -195,6 +192,7 @@ private final ExecutorService executor = Executors.newCachedThreadPool();
                     try {
                         peakMemoryKiB = Long.parseLong(Files.readString(memoryFile).trim());
                     } catch (IOException | NumberFormatException e) {
+    
                         submissionTestResponses.set(
                             i,
                             updateSubmissionTest(

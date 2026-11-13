@@ -23,6 +23,7 @@ import com.example.grader_worker.submission.Submission;
 import com.example.grader_worker.submission.SubmissionRepository;
 import com.example.grader_worker.submissiontest.SubmissionTest;
 import com.example.grader_worker.submissiontest.SubmissionTestRepository;
+import com.example.grader_worker.test.TestRepository;
 
 
 class GradingServiceTest {
@@ -42,6 +43,9 @@ class GradingServiceTest {
     @Mock
     private KubernetesJobService kubernetesJobService;
 
+    @Mock
+    private TestRepository testRepository;
+
     private GradingService gradingService;
     private Assignment assignment;
     private com.example.grader_worker.test.Test test;
@@ -56,6 +60,7 @@ class GradingServiceTest {
             submissionTestRepository,
             submissionRepository,
             gradingRunRepository,
+            testRepository,
             kubernetesJobService
         );
 

@@ -12,7 +12,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Main {
     public static void main(String[] args) throws IOException {
-    
         String json = Files.readString(Path.of("/input/request.json"), StandardCharsets.UTF_8);
 
         ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());

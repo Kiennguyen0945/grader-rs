@@ -1,0 +1,69 @@
+[INFO] Scanning for projects...
+[INFO] Loaded 24457 auto-discovered prefixes for remote repository central (prefixes-central.txt)
+[INFO] 
+[INFO] ---------------------< com.example:grader-worker >----------------------
+[INFO] Building  0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spring-boot:4.1.1:run (default-cli) > test-compile @ grader-worker >>>
+[INFO] Loaded 24457 auto-discovered prefixes for remote repository sonatype-maven-org (prefixes-sonatype-maven-org.txt)
+[INFO] 
+[INFO] --- resources:3.5.0:resources (default-resources) @ grader-worker ---
+[INFO] Copying 1 resource from src/main/resources to target/classes
+[INFO] Copying 0 resource from src/main/resources to target/classes
+[INFO] 
+[INFO] --- compiler:3.15.0:compile (default-compile) @ grader-worker ---
+[WARNING] Could not transfer metadata /.meta/prefixes.txt from/to apache.snapshots (https://repository.apache.org/snapshots): Connect to repository.apache.org:443 [repository.apache.org/37.27.138.133] failed: Connect timed out
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.5.0:testResources (default-testResources) @ grader-worker ---
+[INFO] skip non existing resourceDirectory /home/kien/grader-rs/grader-worker/src/test/resources
+[INFO] 
+[INFO] --- compiler:3.15.0:testCompile (default-testCompile) @ grader-worker ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] <<< spring-boot:4.1.1:run (default-cli) < test-compile @ grader-worker <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot:4.1.1:run (default-cli) @ grader-worker ---
+[INFO] Loaded 50 auto-discovered prefixes for remote repository ow2-snapshot (prefixes-ow2-snapshot.txt)
+[INFO] Attaching agents: []
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.1.1)
+
+2026-11-12T12:31:11.900+07:00  INFO 212188 --- [grader-worker] [           main] c.e.g.GraderWorkerApplication            : Starting GraderWorkerApplication using Java 21.0.9 with PID 212188 (/home/kien/grader-rs/grader-worker/target/classes started by kien in /home/kien/grader-rs/grader-worker)
+2026-11-12T12:31:11.903+07:00  INFO 212188 --- [grader-worker] [           main] c.e.g.GraderWorkerApplication            : No active profile set, falling back to 1 default profile: "default"
+2026-11-12T12:31:12.279+07:00  INFO 212188 --- [grader-worker] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-11-12T12:31:12.328+07:00  INFO 212188 --- [grader-worker] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 42 ms. Found 5 JPA repository interfaces.
+2026-11-12T12:31:12.660+07:00  INFO 212188 --- [grader-worker] [           main] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-11-12T12:31:12.711+07:00  INFO 212188 --- [grader-worker] [           main] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.4.5.Final
+2026-11-12T12:31:13.028+07:00  INFO 212188 --- [grader-worker] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-11-12T12:31:13.070+07:00  INFO 212188 --- [grader-worker] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-11-12T12:31:13.214+07:00  INFO 212188 --- [grader-worker] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@4aa22cc2
+2026-11-12T12:31:13.216+07:00  INFO 212188 --- [grader-worker] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-11-12T12:31:13.275+07:00  INFO 212188 --- [grader-worker] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:postgresql://localhost:5432/grader]
+	Database driver: PostgreSQL JDBC Driver
+	Database dialect: PostgreSQLDialect
+	Database version: 16.15
+	Default catalog/schema: grader/public
+	Autocommit mode: undefined/unknown
+	Isolation level: READ_COMMITTED [default READ_COMMITTED]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-11-12T12:31:14.184+07:00  INFO 212188 --- [grader-worker] [           main] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-11-12T12:31:14.298+07:00  INFO 212188 --- [grader-worker] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-11-12T12:31:15.429+07:00  INFO 212188 --- [grader-worker] [           main] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-11-12T12:31:16.517+07:00  INFO 212188 --- [grader-worker] [           main] o.s.a.r.c.CachingConnectionFactory       : Attempting to connect to: [localhost:5672]
+2026-11-12T12:31:16.560+07:00  INFO 212188 --- [grader-worker] [           main] o.s.a.r.c.CachingConnectionFactory       : Created new connection: rabbitConnectionFactory#7070ae1:0/SimpleConnection@6ce45045 [delegate=amqp://guest@127.0.0.1:5672/, localPort=50280]
+2026-11-12T12:31:16.624+07:00  INFO 212188 --- [grader-worker] [           main] c.e.g.GraderWorkerApplication            : Started GraderWorkerApplication in 5.091 seconds (process running for 5.377)

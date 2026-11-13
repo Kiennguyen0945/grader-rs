@@ -5,5 +5,5 @@ import java.util.List;
 public record GradingResultResponse(
     SubmissionResponse submission,
     GradingRunResponse gradingRun,
-    List<SubmissionTestResponse> tests
+    List<SubmissionTestResponse> submissionTestResponses
 ) {}
